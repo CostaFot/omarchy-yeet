@@ -5,7 +5,7 @@ import qs.Commons
 import qs.Ui
 
 // Popup for the Yeet bar widget: clipboard / file / video rows
-// per messenger, plus a setup row for the optional Brave right-click half.
+// per messenger, plus a setup row for the optional browser right-click half.
 // Every action closes the panel and hands off to scripts/plugin-share; the
 // panel itself never talks to Telegram or Viber.
 Panel {
@@ -59,7 +59,7 @@ Panel {
     if (!s.extension) {
       out.push({ type: "sep" })
       out.push({ type: "action", icon: "󰖟", label: "Set up browser sharing…",
-                 detail: "Right-click share in Brave and Files",
+                 detail: "Right-click share in the browser and Files",
                  action: "setup" })
     }
     return out

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Native messaging host for the Yeet Brave extension.
+# Native messaging host for the Yeet browser extension.
 # Dispatches links/text, downloaded files, and yt-dlp video downloads
 # to Telegram (chat picker) or Viber (clipboard + focus).
 

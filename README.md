@@ -4,8 +4,8 @@
 
 Share to **Telegram** and **Viber** on [Omarchy](https://omarchy.org): a bar
 widget for your clipboard, files, and video links, plus right-click share in
-Brave and Files. Replaces the download → open folder → find window →
-drag-drop routine with one click.
+Brave/Chromium and Files. Replaces the download → open folder → find
+window → drag-drop routine with one click.
 
 ## The bar widget
 
@@ -25,7 +25,7 @@ costafot.yeet toggle` from a keybinding) and pick a row:
 | **Video from copied link** | yt-dlp grabs the video from the URL you copied, live progress in the OSD, then hands it off |
 
 Rows only show for apps you actually have installed; a **Set up browser
-sharing…** row appears until the Brave half below is set up.
+sharing…** row appears until the browser half below is set up.
 
 Every row is also a command — and `send` takes the payload inline, so
 keybindings, scripts, and AI agents can share without touching the panel:
@@ -42,7 +42,7 @@ Viber has no command line and its input **only** accepts pasted images, so
 non-image files (videos mostly) get a Files window opened next to Viber with
 the file pre-selected — drag it into the chat. I don't make the rules.
 
-## From Brave
+## From the browser
 
 <img src="assets/context-menu.png" width="700" alt="the context menu on an X video">
 
@@ -66,28 +66,30 @@ via drag. One file at a time.
 Omarchy (uses `omarchy-launch-or-focus`, `omarchy-notification-send`,
 `omarchy-osd`, `omarchy-clipboard-paste-file`, `omarchy-file-select`),
 `telegram-desktop` and/or `viber`, `yt-dlp`, `wl-clipboard`, `jq`. Optional:
-Brave for the right-click share, `nautilus-python` for the Files right-click.
+Brave or Chromium for the right-click share, `nautilus-python` for the Files
+right-click.
 
 ## Install
 
 The plugin route above is the whole install for the bar widget — the share
 backend is bundled.
 
-The Brave + Files half needs one more step, from the panel's **Set up
+The browser + Files half needs one more step, from the panel's **Set up
 browser sharing…** row or by hand:
 
 ```bash
 ~/.config/omarchy/plugins/costafot.yeet/install.sh
 ```
 
-Then restart Brave. No developer mode, no Load unpacked.
+Then restart the browser. No developer mode, no Load unpacked.
 
-`install.sh` writes three things, all user-level, nothing system-wide:
+`install.sh` finds your browsers (Brave, Chromium — every one you have) and
+writes three things, all user-level, nothing system-wide:
 
-- the native-host manifest in
-  `~/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/`
-- a `--load-extension` entry in `~/.config/brave-flags.conf` — the same
-  mechanism Omarchy uses for its own bundled extensions
+- the native-host manifest in each browser's `NativeMessagingHosts/` dir
+- a `--load-extension` entry in each browser's flags file
+  (`brave-flags.conf` / `chromium-flags.conf`) — the same mechanism Omarchy
+  uses for its own bundled extensions
 - a symlink in `~/.local/share/nautilus-python/extensions/` for the Files
   menu (`nautilus -q` to reload)
 
@@ -101,7 +103,7 @@ the same, minus the bar widget.
 omarchy plugin remove costafot.yeet
 ```
 
-Then restart Brave — the extension unloads with the flag.
+Then restart the browser — the extension unloads with the flag.
 
 ## Notes
 
@@ -120,7 +122,7 @@ Then restart Brave — the extension unloads with the flag.
   unchanged — every extra pixel is bytes your friends download — and the apps'
   own compression tops out around 720p anyway.
 - Downloads land in `~/Downloads` and run as a transient systemd user unit,
-  so closing Brave mid-download doesn't kill them. Folder and cap are
+  so closing the browser mid-download doesn't kill them. Folder and cap are
   overridable in `~/.config/omarchy-yeet/config` (plain shell, takes effect
   on the next share):
 
@@ -130,8 +132,11 @@ Then restart Brave — the extension unloads with the flag.
   ```
 - Images with `blob:` URLs can't be fetched and show a "Share failed"
   notification (rare).
+- No Chrome, sorry: Google removed `--load-extension` from branded Chrome
+  in 2025, so there's no way to auto-install the extension there. Brave and
+  Chromium kept the flag.
 - Heads up for the security-minded: the browser extension talks to a
-  native-messaging host — a bash script on your machine that Brave is allowed
-  to start. That's the entire mechanism, it's ~200 lines, and it's in
+  native-messaging host — a bash script on your machine that your browser is
+  allowed to start. That's the entire mechanism, it's ~200 lines, and it's in
   [`host/yeet-host`](host/yeet-host). Read it before
   installing; that's what it's there for.

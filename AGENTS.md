@@ -26,9 +26,9 @@ canonical idioms (framing, ack, detach, notifications).
   Telegram/Viber sections × Clipboard / File… / Video-from-copied-link rows,
   each row `Quickshell.execDetached`-ing `scripts/plugin-share`. Rows are
   filtered by `scripts/plugin-status` (JSON probe re-run on every open):
-  missing app hides its section, missing yt-dlp hides video rows, missing
-  Brave host manifest adds a "Set up browser sharing…" row that runs
-  install.sh in a floating terminal.
+  missing app hides its section, missing yt-dlp hides video rows, no host
+  manifest in any supported browser adds a "Set up browser sharing…" row
+  that runs install.sh in a floating terminal.
 - `scripts/plugin-share <app> <clipboard|text|file|video> [payload]` —
   builds the same framed JSON the extension sends (python3 one-liner for
   the 4-byte LE frame) and pipes it into the bundled host. Clipboard mode
@@ -63,8 +63,8 @@ canonical idioms (framing, ack, detach, notifications).
 - `nautilus/yeet.py` — nautilus-python extension (modeled on the
   localsend.py it sits next to): "Share to Telegram/Viber" on a single
   selected file, piping a `kind: file` framed message into the host. Finds
-  the host via the Brave host manifest's `path` field (no baked-in paths);
-  items hide when that manifest is missing. Single-file only: Telegram's
+  the host via the first browser host manifest's `path` field (no baked-in
+  paths); items hide when no manifest exists. Single-file only: Telegram's
   forward picker and Viber's clipboard don't stack across a multi-selection.
   Installed as a symlink by `install.sh` (removed by `--uninstall`);
   Nautilus loads extensions at startup, so changes need `nautilus -q`.
@@ -73,29 +73,36 @@ canonical idioms (framing, ack, detach, notifications).
   first 32 hex chars mapped 0-9a-f→a-p → `oehfaclnoafdfecmghpojgolkdheebmk`).
   The normal path therefore writes nothing inside the checkout — critical,
   because `omarchy plugin update` runs git pull in the plugin dir. It only
-  writes the host manifest to
-  `~/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/`, the
-  `--load-extension` flag entry, and the nautilus symlink. The old
-  generate-key.pem-and-inject path survives as a fallback for forks that
-  strip the key. Everything user-level, no sudo.
+  writes, per detected browser (the `BROWSERS` table: Brave, Chromium —
+  detection is `command -v` on the binary), the host manifest into that
+  browser's `NativeMessagingHosts/` dir and the `--load-extension` flag
+  entry into its flags file, plus the nautilus symlink. The browser config
+  paths live in THREE files that must stay in sync: install.sh (`BROWSERS`),
+  scripts/plugin-status (probe list), nautilus/yeet.py (`HOST_MANIFESTS`).
+  The old generate-key.pem-and-inject path survives as a fallback for forks
+  that strip the key. Everything user-level, no sudo.
   **The extension installs with no manual browser steps** (verified
-  2026-08): install.sh appends the extension dir to the
-  `--load-extension=` line in `~/.config/brave-flags.conf` — the exact
-  mechanism Omarchy uses for its own bundled extensions (copy-url, yt-dlp,
-  whatsapp-slim live on that same line; never disturb their entries).
-  Chromium proper removed --load-extension from branded builds in 2025;
-  Brave explicitly kept it. A second `--load-extension=` line would
-  override the first (last flag wins), so install.sh appends to the
-  existing line. The pinned key keeps the ID stable regardless of load
-  path, so the host manifest's allowed_origins always matches. "Load
-  unpacked" is dead as the install path; loading the same dir both ways is
-  harmless (same ID).
+  2026-08 on Brave): install.sh appends the extension dir to the
+  `--load-extension=` line in `~/.config/brave-flags.conf` /
+  `~/.config/chromium-flags.conf` — the exact mechanism Omarchy uses for
+  its own bundled extensions (copy-url, yt-dlp, whatsapp-slim live on the
+  brave-flags.conf line; never disturb their entries). Google Chrome
+  removed --load-extension from branded builds in 2025 — that's why Chrome
+  is NOT in the BROWSERS table (its only path is manual Load-unpacked or
+  Web Store publishing); Brave explicitly kept the flag and open-source
+  Chromium never lost it (Arch's chromium launcher reads
+  chromium-flags.conf). A second `--load-extension=` line would override
+  the first (last flag wins), so install.sh appends to the existing line.
+  The pinned key keeps the ID stable regardless of load path, so every
+  host manifest's allowed_origins always matches. "Load unpacked" is dead
+  as the install path; loading the same dir both ways is harmless (same
+  ID).
 
 Files land in `SHARE_DIR="${YEET_DIR:-$HOME/Downloads}"`. User
 overrides live in `~/.config/omarchy-yeet/config` (plain shell,
 sourced by the host near the top, so both the framed-message path and the
 `--download` worker re-entry see it); env vars still work for CLI testing but
-Brave doesn't inherit the user's shell env, so the config file is the
+the browser doesn't inherit the user's shell env, so the config file is the
 user-facing mechanism.
 
 ## Hard-won constraints — do not re-litigate without re-testing
@@ -197,10 +204,10 @@ Same shape for `file`/`blob`/`video`. Verify visually with
 `grim -g "$(hyprctl clients -j | jq -r '...')"` screenshots; drive paste
 tests with `wtype -M ctrl -k v -m ctrl`. Test video:
 `https://www.youtube.com/watch?v=jNQXAC9IVRw` (19s). Extension changes need
-a Brave restart (the extension loads via `--load-extension`, read at
+a browser restart (the extension loads via `--load-extension`, read at
 startup — and remember the service-worker cache constraint: bump the
 background-N.js filename), plus a refresh of any open x.com/tiktok.com tabs
-to re-inject the content scripts; host-manifest changes need a Brave
+to re-inject the content scripts; host-manifest changes need a browser
 restart; host-script changes apply on next right-click. Plugin changes:
 see the dev loop in the plugin section below.
 

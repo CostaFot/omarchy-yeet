@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "author": "CostaFot",
   "license": "MIT",
-  "description": "Share your clipboard, a file, or a copied video link to Telegram or Viber from the bar. Companion right-click sharing for Brave and Files included.",
+  "description": "Share your clipboard, a file, or a copied video link to Telegram or Viber from the bar. Companion right-click sharing for Brave/Chromium and Files included.",
   "kinds": [
     "bar-widget"
   ],

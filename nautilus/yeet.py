@@ -8,24 +8,30 @@ require_version("Nautilus", "4.1")
 
 from gi.repository import GObject, Gio, GLib, Nautilus
 
-# The Brave host manifest is the single source of truth for where the host
-# script lives — install.sh writes it, and reading it here means this file
-# needs no path baked in at install time.
-HOST_MANIFEST = os.path.join(
-    GLib.get_user_config_dir(),
-    "BraveSoftware/Brave-Browser/NativeMessagingHosts/com.costa.yeet.json",
-)
+# A browser host manifest is the single source of truth for where the host
+# script lives — install.sh writes one per detected browser, and reading it
+# here means this file needs no path baked in at install time. Keep the list
+# in sync with the BROWSERS table in install.sh and scripts/plugin-status.
+HOST_MANIFESTS = [
+    os.path.join(
+        GLib.get_user_config_dir(),
+        config_dir,
+        "NativeMessagingHosts/com.costa.yeet.json",
+    )
+    for config_dir in ("BraveSoftware/Brave-Browser", "chromium")
+]
 
 
 class YeetShareAction(GObject.GObject, Nautilus.MenuProvider):
     def _host_path(self):
-        try:
-            with open(HOST_MANIFEST) as f:
-                path = json.load(f).get("path")
-        except (OSError, ValueError):
-            return None
-        if path and os.access(path, os.X_OK):
-            return path
+        for manifest in HOST_MANIFESTS:
+            try:
+                with open(manifest) as f:
+                    path = json.load(f).get("path")
+            except (OSError, ValueError):
+                continue
+            if path and os.access(path, os.X_OK):
+                return path
         return None
 
     def _send(self, app, path):

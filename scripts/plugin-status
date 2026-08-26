@@ -8,10 +8,14 @@ has() {
   if command -v "$1" >/dev/null 2>&1; then echo true; else echo false; fi
 }
 
+# One manifest per browser install.sh configured — keep in sync with the
+# BROWSERS table there and the probe list in nautilus/yeet.py.
 extension=false
-if [[ -f "$HOME/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/com.costa.yeet.json" ]]; then
-  extension=true
-fi
+for manifest in \
+  "$HOME/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/com.costa.yeet.json" \
+  "$HOME/.config/chromium/NativeMessagingHosts/com.costa.yeet.json"; do
+  [[ -f $manifest ]] && extension=true
+done
 
 printf '{"telegram":%s,"viber":%s,"ytdlp":%s,"extension":%s}\n' \
   "$(has Telegram)" "$(has viber)" "$(has yt-dlp)" "$extension"
