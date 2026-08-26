@@ -22,6 +22,10 @@ canonical idioms (framing, ack, detach, notifications).
 - `extension/instagram-post-url.js` — same idea for Instagram's home feed:
   answers `{type: 'get-post-url'}` with the `/p/<shortcode>/` permalink of
   the post under the right-click. See the Instagram constraint below.
+- `extension/tiktok-video-url.js` — same idea for TikTok's For You feed:
+  answers `{type: 'get-tiktok-url'}` with the `/@user/video/<id>` permalink,
+  and suppresses TikTok's custom video context menu. See the TikTok
+  constraint below.
 - `host/messenger-share-host` — bash. Reads one framed message (4-byte LE
   length + JSON), acks `\x02\x00\x00\x00{}` immediately, dispatches.
   Kinds: `text` (clipboard + focus app), `file` (path on disk), `blob`
@@ -90,6 +94,29 @@ Files land in `SHARE_DIR="${MESSENGER_SHARE_DIR:-$HOME/Downloads}"`.
   links are decoys the shortcode regex must reject. Unlike X, Instagram keeps
   the native context menu on videos — no suppression needed. Stories are not
   handled (login-gated in yt-dlp).
+- **TikTok videos** (all verified live 2026-08): video `src` is `blob:`,
+  home-feed `pageUrl` is bare `tiktok.com/` and is never rewritten while
+  scrolling (like X, unlike IG reels). TikTok replaces the native context
+  menu on its player with its own (Speed/Quality/Download video/Share) on
+  every surface — feed, detail pages, even explore-card previews — so
+  without suppression our items never show; same document-capture
+  `stopImmediatePropagation()` trick as X, scoped to
+  `[id^="xgwrapper-"]`/`video`/`[data-e2e="feed-video"]` (their handler is
+  not on document-capture, so ours wins regardless of registration order).
+  URL recovery: explore/profile grid cards are wrapped in absolute
+  `/@user/video/<id>` anchors (link context → the `-video-link` twins,
+  `info.linkUrl`); feed items have NO permalink anchor at all — the player
+  wrapper id embeds the video id (`xgwrapper-<n>-<videoid>`) and the
+  article's author anchor gives the username, from which
+  `tiktok-video-url.js` reconstructs the permalink. yt-dlp resolves TikTok
+  anonymously and by id alone — a placeholder username
+  (`tiktok.com/@_/video/<id>`) works — and the detail page's own `pageUrl`
+  needs no content script. Photo carousels (`/photo/<id>`) are not
+  yt-dlp-able: the link twins target only `*/video/*`, and carousel images
+  go through the normal image share. When a feed video is paused long
+  enough to unmount, its poster `<img>` (regional `tiktokcdn-*.com` CDN)
+  takes its place — that right-click is an image context and shares the
+  poster frame; accepted edge case.
 - **Video quality**: `-S "res:${MAX_HEIGHT},proto,ext:mp4"` (default 720,
   `MESSENGER_SHARE_MAX_HEIGHT` overrides). 720p because Viber sends files
   through nearly byte-identical (measured: 16.2 MB sent → 15.4 MB received),

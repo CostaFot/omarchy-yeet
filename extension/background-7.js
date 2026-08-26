@@ -16,12 +16,16 @@ chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create({ id: 'vb', title: 'Share to Viber', contexts: ['link', 'image', 'selection', 'page'] });
     chrome.contextMenus.create({ id: 'tg-video', title: 'Download video → Telegram', contexts: ['page', 'video'] });
     chrome.contextMenus.create({ id: 'vb-video', title: 'Download video → Viber', contexts: ['page', 'video'] });
-    // Instagram wraps feed videos in their permalink anchor, which makes the
-    // right-click a 'link' context — the page/video items above never show
-    // there. These link-scoped twins appear only on post/reel hrefs.
-    const igPosts = ['https://www.instagram.com/p/*', 'https://www.instagram.com/reel/*', 'https://www.instagram.com/reels/*'];
-    chrome.contextMenus.create({ id: 'tg-video-link', title: 'Download video → Telegram', contexts: ['link'], targetUrlPatterns: igPosts });
-    chrome.contextMenus.create({ id: 'vb-video-link', title: 'Download video → Viber', contexts: ['link'], targetUrlPatterns: igPosts });
+    // Instagram wraps feed videos in their permalink anchor, and TikTok's
+    // explore/profile grids wrap each card the same way — a 'link' context,
+    // where the page/video items above never show. These link-scoped twins
+    // appear only on post/reel/video hrefs.
+    const postLinks = [
+      'https://www.instagram.com/p/*', 'https://www.instagram.com/reel/*', 'https://www.instagram.com/reels/*',
+      'https://www.tiktok.com/*/video/*',
+    ];
+    chrome.contextMenus.create({ id: 'tg-video-link', title: 'Download video → Telegram', contexts: ['link'], targetUrlPatterns: postLinks });
+    chrome.contextMenus.create({ id: 'vb-video-link', title: 'Download video → Viber', contexts: ['link'], targetUrlPatterns: postLinks });
   });
 });
 
@@ -83,6 +87,25 @@ async function shareVideo(app, info, tab) {
     }
     if (!url) {
       send({ app, kind: 'error', message: 'Could not find the Instagram post for this video' });
+      return;
+    }
+  }
+
+  // TikTok: feed videos are blob: sources on a bare tiktok.com/ pageUrl.
+  // Detail pages already name the video in pageUrl, and grid cards carry it
+  // in linkUrl; only the home feed needs the content script, which
+  // reconstructs the permalink from the player wrapper id + author link.
+  if (/^https:\/\/(?:www\.)?tiktok\.com\//.test(info.pageUrl)) {
+    const TIKTOK_VIDEO = /tiktok\.com\/(@[\w.-]+)\/video\/(\d+)/;
+    const post = (info.linkUrl || '').match(TIKTOK_VIDEO) || info.pageUrl.match(TIKTOK_VIDEO);
+    url = post ? 'https://www.tiktok.com/' + post[1] + '/video/' + post[2] : null;
+    if (!url && tab && tab.id != null) {
+      url = await chrome.tabs.sendMessage(tab.id, { type: 'get-tiktok-url' })
+        .then((resp) => resp && resp.url)
+        .catch(() => null);
+    }
+    if (!url) {
+      send({ app, kind: 'error', message: 'Could not find the TikTok video' });
       return;
     }
   }
