@@ -39,13 +39,20 @@ viber_send_file() {
   local file="$1" mime
   mime=$(file --brief --mime-type "$file")
   if [[ $mime == image/* ]]; then
+    # Viber's input accepts pasted image data...
     omarchy-clipboard-paste-file --copy-only "$mime" "$file"
+    omarchy-notification-send -g 󰅍 "Copied — press Ctrl+V in a Viber chat" "$(basename "$file")"
+    focus_viber
   else
-    # Qt chat inputs treat a pasted uri-list like a file drop.
-    printf 'file://%s\n' "$file" | wl-copy --type text/uri-list
+    # ...but no other clipboard format (text/uri-list pastes as literal text),
+    # so hand anything else over as a drag: raise Viber, then open Files with
+    # the file already selected beside it.
+    focus_viber
+    # setsid -f: nautilus does not daemonize, and a synchronous call would
+    # block this host on it. Safe in the worker too thanks to KillMode=process.
+    setsid -f nautilus --select "$file" </dev/null >/dev/null 2>&1 || true
+    omarchy-notification-send -g 󰇚 "Drag the file into your Viber chat" "$(basename "$file")"
   fi
-  omarchy-notification-send -g 󰅍 "Copied — press Ctrl+V in a Viber chat" "$(basename "$file")"
-  focus_viber
 }
 
 # --- dispatch -----------------------------------------------------------------
@@ -183,8 +190,11 @@ main() {
   video)
     url=$(jq -r '.url // empty' <<<"$payload")
     [[ $url =~ ^https?:// ]] || exit 0
-    # A transient unit (not setsid) so a long download survives the browser closing.
-    systemd-run --user --quiet --collect "$SCRIPT_PATH" --download "$app" "$url"
+    # A transient unit (not setsid) so a long download survives the browser
+    # closing. KillMode=process: on exit, clean up only the worker itself —
+    # the default control-group kill would take down the forked wl-copy that
+    # keeps serving the clipboard after a Viber dispatch.
+    systemd-run --user --quiet --collect -p KillMode=process "$SCRIPT_PATH" --download "$app" "$url"
     ;;
   error)
     omarchy-notification-send -u critical -g 󰅖 "Share failed" "$(jq -r '.message // empty' <<<"$payload")"
