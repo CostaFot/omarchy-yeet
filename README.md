@@ -8,6 +8,8 @@ download → open folder → find window → drag-drop routine with one menu cli
 
 ## Menu items
 
+<img src="assets/context-menu.png" width="700" alt="the context menu on an X video">
+
 | Right-click on | Menu item | What happens |
 |---|---|---|
 | Anything | **Share to Telegram / Viber** | Link/text lands on your clipboard, app is focused — Ctrl+V in a chat |
