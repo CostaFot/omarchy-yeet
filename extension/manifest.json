@@ -13,8 +13,15 @@
     "128": "icon.png"
   },
   "background": {
-    "service_worker": "background-3.js"
+    "service_worker": "background-4.js"
   },
+  "content_scripts": [
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*"],
+      "js": ["twitter-tweet-url.js"],
+      "run_at": "document_start"
+    }
+  ],
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApXbhuQObhAPYH/1bWABhaGZ246CfS65OsOpOeBv/CooW0qVkYco+qD4E5fv4ZcMriwPiVIcDojIcqBJkVj4JdFKNedwfEoat3cJJ4u8UW8fMcBgIL60nFYbAx6ZOeIj4mwFYcRQTASiCz72HYzxIi7qJSNI8btksN8nBlxshGXF8wLAjlLsb5/tGMgw7Nssh/orQvTyaC5P9R4LSJ7zJnQD/1OB97EL3Rbm81c/TShoFZbl2TMTVkno/IRKw3rBmJoOMSzzFzGJpqbXpOJrcFo7FTVoMrOCxICMUAyDmXaxmgy1ic7TQPwSqtcUrnGQjbeai5sVJo/tLN+cdKVe/twIDAQAB",
   "host_permissions": [
     "<all_urls>"

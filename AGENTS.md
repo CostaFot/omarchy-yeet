@@ -51,6 +51,19 @@ Files land in `SHARE_DIR="${MESSENGER_SHARE_DIR:-$HOME/Downloads}"`.
 - Keep launches synchronous where the target daemonizes/forwards
   (`uwsm-app -- Telegram -- file`, `omarchy-launch-or-focus`); detach with
   `setsid -f` only what stays in the foreground.
+- **X/Twitter videos** (all verified live 2026-08): video `src` is `blob:` or
+  empty, timeline `pageUrl` is `/home` — the only yt-dlp-able URL is the tweet's
+  `/status/` URL. `extension/twitter-tweet-url.js` (content script, x.com +
+  twitter.com) records the status URL of the tweet under each right-click via
+  the timestamp link `a[href*="/status/"]:has(time)`; promoted tweets have no
+  timestamp link, only `/status/<id>/analytics`, which the regex trims. X also
+  replaces the native context menu on playing videos with its own
+  ("Copy video address / Post Video") — the content script suppresses it with a
+  capture-phase `stopImmediatePropagation()` at document level inside
+  `[data-testid="videoPlayer"]`/`videoComponent`; X's handler is delegated, so
+  document-capture wins even when registered late. yt-dlp resolves x.com
+  status URLs anonymously (no cookies) and follows quote-tweets to the quoted
+  video; the host's format selector picks X's direct http mp4 fine.
 
 ## Testing without the browser
 

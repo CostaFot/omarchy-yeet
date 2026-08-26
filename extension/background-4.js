@@ -19,14 +19,11 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-chrome.contextMenus.onClicked.addListener((info) => {
+chrome.contextMenus.onClicked.addListener((info, tab) => {
   const app = info.menuItemId.startsWith('tg') ? 'telegram' : 'viber';
 
   if (String(info.menuItemId).endsWith('-video')) {
-    // Prefer a directly fetchable media URL; YouTube-style blob: sources fall
-    // back to the page URL, which yt-dlp resolves itself.
-    const direct = info.srcUrl && /^https?:/i.test(info.srcUrl) ? info.srcUrl : null;
-    send({ app, kind: 'video', url: direct || info.pageUrl });
+    shareVideo(app, info, tab);
   } else if (info.mediaType === 'image' && info.srcUrl) {
     fetchAndShare(app, info.srcUrl);
   } else if (info.linkUrl) {
@@ -37,6 +34,33 @@ chrome.contextMenus.onClicked.addListener((info) => {
     send({ app, kind: 'text', text: info.pageUrl });
   }
 });
+
+async function shareVideo(app, info, tab) {
+  // Prefer a directly fetchable media URL; YouTube-style blob: sources fall
+  // back to the page URL, which yt-dlp resolves itself.
+  const direct = info.srcUrl && /^https?:/i.test(info.srcUrl) ? info.srcUrl : null;
+  let url = direct || info.pageUrl;
+
+  // On X the page URL only works when already on the tweet's own page; on a
+  // timeline (/home, a profile) ask the content script which tweet was under
+  // the right-click. Direct src URLs there are low-res previews — the status
+  // URL through yt-dlp always wins.
+  if (/^https:\/\/(x|twitter)\.com\//.test(info.pageUrl)) {
+    const status = info.pageUrl.match(/^https:\/\/(?:x|twitter)\.com\/[^/]+\/status\/\d+/);
+    url = status ? status[0] : null;
+    if (!url && tab && tab.id != null) {
+      url = await chrome.tabs.sendMessage(tab.id, { type: 'get-tweet-url' })
+        .then((resp) => resp && resp.url)
+        .catch(() => null);
+    }
+    if (!url) {
+      send({ app, kind: 'error', message: 'Could not find the tweet for this video' });
+      return;
+    }
+  }
+
+  send({ app, kind: 'video', url });
+}
 
 // Images are fetched by the extension itself (with the page's cookies, thanks
 // to host_permissions) and handed to the host as base64. This deliberately

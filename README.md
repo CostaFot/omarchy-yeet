@@ -58,6 +58,9 @@ Then remove the extension in `brave://extensions` and delete this folder.
 - On YouTube, the first right-click on the player shows YouTube's own menu;
   right-click a second time for the browser menu. Right-clicking the page
   outside the player works too.
+- On X/Twitter, right-click a video (or anywhere on its tweet) and pick
+  **Download video** — the extension figures out which tweet you clicked, even
+  from the timeline. X's own video menu is suppressed so the browser menu shows.
 - Video downloads run as a transient systemd user unit, so closing Brave
   mid-download doesn't kill them.
 - Images with `blob:` URLs can't be fetched and will show a "Share failed"
