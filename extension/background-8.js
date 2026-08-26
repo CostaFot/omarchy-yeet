@@ -29,7 +29,7 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-chrome.contextMenus.onClicked.addListener((info, tab) => {
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   const app = info.menuItemId.startsWith('tg') ? 'telegram' : 'viber';
 
   if (String(info.menuItemId).includes('-video')) {
@@ -41,9 +41,26 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   } else if (info.selectionText) {
     send({ app, kind: 'text', text: info.selectionText });
   } else {
-    send({ app, kind: 'text', text: info.pageUrl });
+    send({ app, kind: 'text', text: (await feedPostUrl(info, tab)) || info.pageUrl });
   }
 });
+
+// Feed surfaces make pageUrl useless for a plain page share — an X timeline
+// is /home, TikTok's For You is bare tiktok.com/ — but the content scripts
+// already track the post under each right-click for the video path. Ask them;
+// returns null off these sites or when no post was under the click, and the
+// caller falls back to pageUrl (correct on detail pages and profiles).
+async function feedPostUrl(info, tab) {
+  const query =
+    /^https:\/\/(x|twitter)\.com\//.test(info.pageUrl) ? 'get-tweet-url' :
+    /^https:\/\/(?:www\.)?instagram\.com\//.test(info.pageUrl) ? 'get-post-url' :
+    /^https:\/\/(?:www\.)?tiktok\.com\//.test(info.pageUrl) ? 'get-tiktok-url' :
+    null;
+  if (!query || !tab || tab.id == null) return null;
+  return chrome.tabs.sendMessage(tab.id, { type: query })
+    .then((resp) => resp && resp.url)
+    .catch(() => null);
+}
 
 async function shareVideo(app, info, tab) {
   // Prefer a directly fetchable media URL; YouTube-style blob: sources fall

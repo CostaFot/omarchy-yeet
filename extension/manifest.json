@@ -13,7 +13,7 @@
     "128": "icon.png"
   },
   "background": {
-    "service_worker": "background-7.js"
+    "service_worker": "background-8.js"
   },
   "content_scripts": [
     {
