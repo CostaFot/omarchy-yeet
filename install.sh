@@ -127,5 +127,5 @@ if [[ ${#configured[@]} -gt 0 ]]; then
   echo
   echo "Extension ID: $EXT_ID"
   echo
-  echo "Restart ${browsers// / and } and you're done — check brave://extensions if curious."
+  echo "Restart ${browsers// / and } and you're done — check chrome://extensions if curious."
 fi
