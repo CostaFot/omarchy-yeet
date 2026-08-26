@@ -60,10 +60,10 @@ Then remove the extension in `brave://extensions` and delete this folder.
   menu is suppressed so the browser menu can show.
 - Instagram works from the home feed, the reels viewer, and open posts.
   Stories are login-gated and not supported.
-- TikTok works from the For You feed, explore and profile grids, and open
-  videos. TikTok's own right-click menu (Speed/Quality/Download…) is
-  suppressed on the player so the browser menu can show. Photo carousels
-  aren't videos — share those as images.
+- TikTok works from the For You feed, the explore and profile grids, and open
+  videos. TikTok's own right-click menu (Speed / Quality / Download…) is
+  suppressed the same way. Photo carousels aren't videos — share those as
+  images.
 - On YouTube, the first right-click on the player shows YouTube's own menu;
   right-click a second time for the browser menu.
 - Videos are capped at 720p because Viber passes files through nearly
