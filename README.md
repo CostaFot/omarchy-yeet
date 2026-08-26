@@ -1,6 +1,6 @@
 # omarchy-messenger-share
 
-<img src="assets/modern-solutions.png" width="300" alt="the architecture diagram">
+<img src="assets/modern-solutions.jpg" width="300" alt="the architecture diagram">
 
 Right-click share links, images, selected text, and videos from Brave straight
 to **Telegram** and **Viber** on [Omarchy](https://omarchy.org). Replaces the
