@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "costafot.messenger-share",
+  "name": "Messenger Share",
+  "version": "1.0.0",
+  "author": "CostaFot",
+  "license": "MIT",
+  "description": "Share your clipboard, a file, or a copied video link to Telegram or Viber from the bar. Companion right-click sharing for Brave and Files included.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Messenger Share",
+    "description": "One share icon: clipboard, file picker, or yt-dlp video handoff to Telegram and Viber",
+    "category": "Productivity",
+    "aliases": ["share", "messenger"],
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}

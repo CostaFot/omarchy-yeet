@@ -1,0 +1,79 @@
+#!/bin/bash
+
+# Share action behind the bar widget's panel rows: builds the same framed
+# native-messaging payload the browser extension sends and pipes it into the
+# bundled host, so all dispatch quirks (Telegram chat picker, Viber
+# clipboard/drag, yt-dlp worker) live in exactly one place.
+# Usage: plugin-share <telegram|viber> <clipboard|file|video>
+
+set -euo pipefail
+
+# Launched by omarchy-shell, whose environment already has Omarchy on PATH —
+# but export anyway so a bare terminal invocation behaves the same.
+export OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
+export PATH="$OMARCHY_PATH/bin:/usr/local/bin:/usr/bin:$PATH"
+
+PLUGIN_DIR="$(cd -- "$(dirname -- "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+HOST="$PLUGIN_DIR/host/messenger-share-host"
+
+APP="${1:-}"
+MODE="${2:-}"
+if [[ $APP != telegram && $APP != viber ]]; then
+  echo "Usage: plugin-share <telegram|viber> <clipboard|file|video>" >&2
+  exit 1
+fi
+
+fail_toast() {
+  omarchy-notification-send -u critical -g 󰅖 "$1" "${2:-}"
+  exit 0
+}
+
+# Native messaging frame: 4-byte little-endian length prefix, then the JSON
+# from stdin. The host's ack (\x02\0\0\0{}) goes to /dev/null.
+send() {
+  python3 -c 'import struct, sys
+m = sys.stdin.buffer.read()
+sys.stdout.buffer.write(struct.pack("<I", len(m)) + m)' | "$HOST" >/dev/null
+}
+
+case $MODE in
+clipboard)
+  # An image on the clipboard (screenshots, mostly) beats any text
+  # representation of it; base64 it through the host's blob path so the
+  # file lands in SHARE_DIR with browser-style uniquifying.
+  imgtype=$(wl-paste --list-types 2>/dev/null | grep -m1 '^image/' || true)
+  if [[ -n $imgtype ]]; then
+    ext=${imgtype#image/}
+    ext=${ext%%[;+]*}
+    wl-paste --type "$imgtype" | base64 -w0 |
+      jq -Rc --arg app "$APP" --arg name "clipboard.$ext" \
+        '{app: $app, kind: "blob", name: $name, data: .}' | send
+  else
+    text=$(wl-paste --no-newline --type text 2>/dev/null || true)
+    [[ -n $text ]] || fail_toast "Nothing to share" "Clipboard is empty"
+    jq -cn --arg app "$APP" --arg text "$text" \
+      '{app: $app, kind: "text", text: $text}' | send
+  fi
+  ;;
+file)
+  status=0
+  picked=$(omarchy-file-select --title "Share to ${APP^}") || status=$?
+  if ((status > 1)); then
+    fail_toast "Could not share" "The file chooser did not open"
+  fi
+  [[ -n $picked ]] || exit 0
+  jq -cn --arg app "$APP" --arg path "$picked" \
+    '{app: $app, kind: "file", path: $path}' | send
+  ;;
+video)
+  url=$(wl-paste --no-newline --type text 2>/dev/null || true)
+  [[ $url =~ ^https?://[^[:space:]]+$ ]] ||
+    fail_toast "No link on the clipboard" "Copy the video page's URL, then try again"
+  jq -cn --arg app "$APP" --arg url "$url" \
+    '{app: $app, kind: "video", url: $url}' | send
+  ;;
+*)
+  echo "Usage: plugin-share <telegram|viber> <clipboard|file|video>" >&2
+  exit 1
+  ;;
+esac

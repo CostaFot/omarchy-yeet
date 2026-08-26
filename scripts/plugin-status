@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Environment probe for the bar widget's panel: which messengers exist,
+# whether yt-dlp is around for the video rows, and whether the browser
+# extension half (install.sh) has been set up. One JSON object on stdout.
+
+has() {
+  if command -v "$1" >/dev/null 2>&1; then echo true; else echo false; fi
+}
+
+extension=false
+if [[ -f "$HOME/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/com.costa.messenger_share.json" ]]; then
+  extension=true
+fi
+
+printf '{"telegram":%s,"viber":%s,"ytdlp":%s,"extension":%s}\n' \
+  "$(has Telegram)" "$(has viber)" "$(has yt-dlp)" "$extension"

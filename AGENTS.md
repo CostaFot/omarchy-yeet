@@ -1,13 +1,34 @@
 # omarchy-messenger-share — agent notes
 
-Right-click share from Brave to Telegram/Viber on Omarchy. Two halves:
-a thin MV3 extension (context menus + X/Twitter and Instagram content
-scripts) and a
+Share to Telegram/Viber on Omarchy. Three halves: an Omarchy shell
+bar-widget plugin (the repo root IS the plugin), a thin MV3 extension
+(context menus + X/Twitter and Instagram content scripts), and a
 bash native-messaging host that does all real work. Modeled on Omarchy's own
 `/usr/share/omarchy/bin/omarchy-chromium-ytdlp-host` — read that for the
 canonical idioms (framing, ack, detach, notifications).
 
 ## Architecture
+
+- `manifest.json` + `BarWidget.qml` + `Panel.qml` — the Omarchy shell plugin
+  (kind `bar-widget`, id `costafot.messenger-share`). `omarchy plugin add
+  <repo> --enable` clones the whole repo into
+  `~/.config/omarchy/plugins/costafot.messenger-share/`, so the bash host
+  ships inside the plugin dir and the bar half needs no install.sh.
+  BarWidget is a one-glyph button (modeled on agx.screen-time's — panel
+  shape contract + IpcHandler so `omarchy-shell costafot.messenger-share
+  toggle` works from a keybinding). Panel is a `qs.Ui` KeyboardPanel:
+  Telegram/Viber sections × Clipboard / File… / Video-from-copied-link rows,
+  each row `Quickshell.execDetached`-ing `scripts/plugin-share`. Rows are
+  filtered by `scripts/plugin-status` (JSON probe re-run on every open):
+  missing app hides its section, missing yt-dlp hides video rows, missing
+  Brave host manifest adds a "Set up browser sharing…" row that runs
+  install.sh in a floating terminal.
+- `scripts/plugin-share <app> <clipboard|file|video>` — builds the same
+  framed JSON the extension sends (python3 one-liner for the 4-byte LE
+  frame) and pipes it into the bundled host. Clipboard mode prefers an
+  `image/*` clipboard type (screenshots) via the host's `blob` path;
+  file mode uses `omarchy-file-select`; video mode validates an
+  `https://` URL off the clipboard.
 
 - `extension/background-N.js` — builds 4 context-menu items, resolves the
   click payload, sends `{app, kind, ...}` over
@@ -39,11 +60,28 @@ canonical idioms (framing, ack, detach, notifications).
   forward picker and Viber's clipboard don't stack across a multi-selection.
   Installed as a symlink by `install.sh` (removed by `--uninstall`);
   Nautilus loads extensions at startup, so changes need `nautilus -q`.
-- `install.sh` — generates `key.pem` (gitignored), pins the extension ID
-  by injecting `key` into the manifest, computes the ID
-  (sha256 of DER pubkey, first 32 hex chars mapped 0-9a-f→a-p), writes the
-  host manifest to `~/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/`.
-  Everything user-level, no sudo.
+- `install.sh` — the extension ID is pinned by the `key` field COMMITTED in
+  `extension/manifest.json` (public key only; ID = sha256 of DER pubkey,
+  first 32 hex chars mapped 0-9a-f→a-p → `oehfaclnoafdfecmghpojgolkdheebmk`).
+  The normal path therefore writes nothing inside the checkout — critical,
+  because `omarchy plugin update` runs git pull in the plugin dir. It only
+  writes the host manifest to
+  `~/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/`, the
+  `--load-extension` flag entry, and the nautilus symlink. The old
+  generate-key.pem-and-inject path survives as a fallback for forks that
+  strip the key. Everything user-level, no sudo.
+  **The extension installs with no manual browser steps** (verified
+  2026-08): install.sh appends the extension dir to the
+  `--load-extension=` line in `~/.config/brave-flags.conf` — the exact
+  mechanism Omarchy uses for its own bundled extensions (copy-url, yt-dlp,
+  whatsapp-slim live on that same line; never disturb their entries).
+  Chromium proper removed --load-extension from branded builds in 2025;
+  Brave explicitly kept it. A second `--load-extension=` line would
+  override the first (last flag wins), so install.sh appends to the
+  existing line. The pinned key keeps the ID stable regardless of load
+  path, so the host manifest's allowed_origins always matches. "Load
+  unpacked" is dead as the install path; loading the same dir both ways is
+  harmless (same ID).
 
 Files land in `SHARE_DIR="${MESSENGER_SHARE_DIR:-$HOME/Downloads}"`. User
 overrides live in `~/.config/omarchy-messenger-share/config` (plain shell,
@@ -160,40 +198,40 @@ host-script changes apply on next right-click.
 - `viber://forward?text=...` deep link might beat clipboard+focus for
   text/links to Viber — untested.
 
-### Next up: Omarchy shell plugin + marketplace listing
+### Omarchy shell plugin — built 2026-08, all verified live
 
-Researched 2026-08 (marketplace repo cloned + local shell sources read);
-the facts below are verified, don't re-derive them.
+The `bar-widget` plugin shipped (see Architecture). Design decisions and
+facts learned building it, don't re-derive:
 
-- The marketplace (HANCORE-linux/omarchy-plugin-marketplace →
-  omarchyplugins.com) only lists **Omarchy shell plugins**: root
-  `manifest.json` with `schemaVersion: 1`, required `id`/`name`/`version`/
-  `author`/`description`, `kinds` from `{bar, bar-widget, menu, overlay,
-  panel, service}`, and per-kind `entryPoints` — **QML files** loaded into
-  omarchy-shell (quickshell) by `omarchy plugin add <repo> --enable`. The
-  schema is enforced locally by `omarchy plugin validate <dir>`
-  (`/usr/share/omarchy/bin/omarchy-plugin-validate`, mirrors
-  `shell/services/PluginRegistry.qml`) — use that as the dev loop.
-- A manifest may declare `"installation": {"mode": "manual", "note": ...}`
-  (marketplace then shows the note instead of an install command), but
-  `kinds`/`entryPoints` must still validate — a token QML entry point to
-  game a listing would not survive maintainer review. Don't go that route.
-- **Plan**: build a real `menu`-kind (maybe + `panel` for settings) QML
-  plugin in this repo — Share-to-Telegram/Viber rows that take the
-  clipboard or a file picker and pipe the same framed messages into
-  `host/messenger-share-host` (see `nautilus/messenger-share.py` for the
-  framing idiom and host-path discovery via the Brave host manifest). The
-  extension/host/nautilus halves stay companions installed by `install.sh`;
-  the plugin's README note points at it. This supersedes the old
-  `trigger.share.*` omarchy-menu.jsonc idea. A settings `panel` (edit
-  `~/.config/omarchy-messenger-share/config`, show install health, run
-  install.sh) is the stretch goal.
-- Local example of plugin shape: `/usr/share/omarchy/shell/plugins/agents/`
-  (Main.qml + manifest).
-- Plugin id must be globally unique, lowercase, not `omarchy.*`; use
-  `io.github.costafot.messenger-share`. Submission is an issue form on the
-  marketplace repo (category `Productivity`, 1–3 tags); repo needs root
-  README + license, and listings get an exact-commit security scan.
-  Expect scrutiny: a companion native-messaging host is browser-reachable
-  code execution, and their policy explicitly flags persistent services
-  and process control — be upfront about it in the README.
+- **bar-widget over menu-kind**: a bar icon + KeyboardPanel popup installs
+  discoverable with zero keybind editing (`--enable` puts it in the bar,
+  defaultSection right), matches every third-party plugin installed on this
+  machine, and `omarchy-shell <id> toggle` still works for keybinds via the
+  plugin's own IpcHandler. The menu-kind idea is superseded.
+- Third-party QML CAN `import qs.Ui` / `qs.Commons` (costafot.autoduck
+  proves it). Copy the widget↔panel wiring from
+  `~/.config/omarchy/plugins/agx.screen-time/` — panel shape contract
+  (opened/open/close/togglePanel/closeForPopoutSwitch), injectPanel(),
+  KeyboardPanel + PanelKeyCatcher, owner: hostWidget for the popout
+  coordinator.
+- **Dev loop**: `rsync -a --delete --exclude .git --exclude key.pem . \
+  ~/.config/omarchy/plugins/costafot.messenger-share/` then
+  `omarchy-restart-shell`. The shell's inotify live-reload fires
+  (`Local plugin changed, reloading` in journal) but the running panel kept
+  serving the OLD component in testing — restart to be sure. Validate with
+  `omarchy plugin validate .` (checks entry points exist, no symlinks
+  anywhere in the folder — don't add any).
+- `omarchy plugin add` clones the repo, so the plugin only ships what's
+  COMMITTED — manifest.json/QML/scripts must be committed before a real
+  `plugin add` test works (validation failed on the uncommitted tree,
+  expected).
+- id `costafot.messenger-share` (matches the published costafot.autoduck
+  convention, not the io.github.* guess from earlier notes).
+- Marketplace (HANCORE-linux/omarchy-plugin-marketplace →
+  omarchyplugins.com): submission is an issue form (category
+  `Productivity`, 1–3 tags); repo needs root README + license (both present
+  now) + preview.png (present); listings get an exact-commit security scan.
+  Expect scrutiny: the bundled native-messaging host is browser-reachable
+  code execution — the README's last Note discloses it deliberately.
+  **Still to do: submit the listing** (needs the plugin files committed +
+  pushed first).
