@@ -20,35 +20,22 @@ costafot.yeet toggle` from a keybinding) and pick a row:
 
 | Row | What happens |
 |---|---|
-| **Clipboard** | Text/link: the app is focused, paste in a chat — it's already on your clipboard. An image (screenshots): saved and sent like any image share |
-| **File…** | File chooser opens, pick one, it's handed to the app |
-| **Video from copied link** | yt-dlp grabs the video (mp4, ≤720p) from the URL you copied, with live progress in the Omarchy OSD, then hands it off |
+| **Clipboard** | Text/link: the app is focused, paste in a chat. An image (screenshots): saved and sent like any image share |
+| **File…** | Pick a file, it's handed to the app |
+| **Video from copied link** | yt-dlp grabs the video from the URL you copied, live progress in the OSD, then hands it off |
 
-Rows only show for apps you actually have installed. The **Set up browser
-sharing…** row at the bottom appears until the Brave half below is installed,
-and runs the installer for you.
+Rows only show for apps you actually have installed; a **Set up browser
+sharing…** row appears until the Brave half below is set up.
 
-Every row is also a command, so you can skip the panel entirely from a
-keybinding or script:
-
-```bash
-omarchy-shell costafot.yeet share telegram clipboard
-omarchy-shell costafot.yeet share viber video   # yt-dlp on the copied link
-```
-
-`share <telegram|viber> <clipboard|file|video>` — same actions as the rows.
-
-And `send` takes the payload right on the command line — no picker, no
-clipboard — so scripts and AI agents can drive shares end to end:
+Every row is also a command — and `send` takes the payload inline, so
+keybindings, scripts, and AI agents can share without touching the panel:
 
 ```bash
+omarchy-shell costafot.yeet share telegram clipboard    # same as the rows
 omarchy-shell costafot.yeet send telegram text "meeting moved to 3pm"
 omarchy-shell costafot.yeet send telegram file ~/Downloads/report.pdf
 omarchy-shell costafot.yeet send viber video https://x.com/i/status/123456
 ```
-
-`send <telegram|viber> <text|file|video> <payload>`. The same works
-without the shell: `scripts/plugin-share <app> <mode> [payload]`.
 
 Telegram takes files through its native chat picker — pick the friend, done.
 Viber has no command line and its input **only** accepts pasted images, so
@@ -69,10 +56,10 @@ the file pre-selected — drag it into the chat. I don't make the rules.
 
 <img src="assets/files-menu.png" width="360" alt="the Files context menu">
 
-The same two items show up when you right-click a file in Files —
-`install.sh` sets this up automatically if `nautilus-python` is installed.
-Same rules as above: Telegram opens its chat picker, Viber takes images via
-clipboard and everything else via drag. One file at a time.
+The same two items on a right-clicked file in Files (needs
+`nautilus-python`; `install.sh` sets it up). Same rules as above: Telegram
+opens its chat picker, Viber takes images via clipboard and everything else
+via drag. One file at a time.
 
 ## Requirements
 
@@ -84,26 +71,28 @@ Brave for the right-click share, `nautilus-python` for the Files right-click.
 ## Install
 
 The plugin route above is the whole install for the bar widget — the share
-backend is bundled in the plugin.
+backend is bundled.
 
-The Brave + Files half needs one more step, either from the panel's **Set up
+The Brave + Files half needs one more step, from the panel's **Set up
 browser sharing…** row or by hand:
 
 ```bash
 ~/.config/omarchy/plugins/costafot.yeet/install.sh
 ```
 
-Then restart Brave. That's it — no developer mode, no Load unpacked.
+Then restart Brave. No developer mode, no Load unpacked.
 
-`install.sh` writes three things outside the repo: the Brave native-host
-manifest in `~/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/`,
-a `--load-extension` entry in `~/.config/brave-flags.conf` (the same
-mechanism Omarchy uses to ship its own browser extensions — the extension
-shows up in `brave://extensions` on the next start), and a symlink for the
-Files extension in `~/.local/share/nautilus-python/extensions/` (restart
-Files with `nautilus -q` to pick it up). No sudo, nothing system-wide. Not
-on Omarchy's plugin system? A plain `git clone` + `./install.sh` works the
-same, minus the bar widget.
+`install.sh` writes three things, all user-level, nothing system-wide:
+
+- the native-host manifest in
+  `~/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/`
+- a `--load-extension` entry in `~/.config/brave-flags.conf` — the same
+  mechanism Omarchy uses for its own bundled extensions
+- a symlink in `~/.local/share/nautilus-python/extensions/` for the Files
+  menu (`nautilus -q` to reload)
+
+Not on Omarchy's plugin system? A plain `git clone` + `./install.sh` works
+the same, minus the bar widget.
 
 ## Uninstall
 
@@ -119,29 +108,26 @@ Then restart Brave — the extension unloads with the flag.
 - Video downloads work anywhere yt-dlp does. Tested daily: YouTube, X/Twitter,
   Instagram, TikTok.
 - On X/Twitter, right-click a video or anywhere on its tweet — the extension
-  figures out which tweet you clicked, even from the timeline. X's own video
-  menu is suppressed so the browser menu can show.
-- Instagram works from the home feed, the reels viewer, and open posts.
-  Stories are login-gated and not supported.
-- TikTok works from the For You feed, the explore and profile grids, and open
-  videos. TikTok's own right-click menu (Speed / Quality / Download…) is
-  suppressed the same way. Photo carousels aren't videos — share those as
-  images.
-- On YouTube, the first right-click on the player shows YouTube's own menu;
-  right-click a second time for the browser menu.
+  figures out which tweet you clicked, even from the timeline.
+- Instagram: home feed, reels viewer, open posts. Stories are login-gated and
+  not supported.
+- TikTok: For You feed, explore and profile grids, open videos. Photo
+  carousels aren't videos — share those as images.
+- X and TikTok replace the browser's right-click menu on videos with their
+  own; the extension suppresses that so sharing works. On YouTube, right-click
+  the player twice — the first click gets YouTube's own menu.
 - Videos are capped at 720p because Viber passes files through nearly
   unchanged — every extra pixel is bytes your friends download — and the apps'
   own compression tops out around 720p anyway.
-- Downloaded media stays in `~/Downloads`.
-- Both are overridable in `~/.config/omarchy-yeet/config`
-  (plain shell, sourced by the host — takes effect on the next share):
+- Downloads land in `~/Downloads` and run as a transient systemd user unit,
+  so closing Brave mid-download doesn't kill them. Folder and cap are
+  overridable in `~/.config/omarchy-yeet/config` (plain shell, takes effect
+  on the next share):
 
   ```sh
   YEET_DIR="$HOME/Videos/shares"
   YEET_MAX_HEIGHT=1080
   ```
-- Downloads run as a transient systemd user unit — closing Brave mid-download
-  doesn't kill them.
 - Images with `blob:` URLs can't be fetched and show a "Share failed"
   notification (rare).
 - Heads up for the security-minded: the browser extension talks to a
