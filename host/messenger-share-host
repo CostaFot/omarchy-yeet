@@ -64,6 +64,24 @@ dispatch_file() {
   if [[ $app == telegram ]]; then telegram_send_file "$file"; else viber_send_file "$file"; fi
 }
 
+# Write a base64 payload (extension-fetched image) into SHARE_DIR and dispatch.
+receive_blob() {
+  local app="$1" name="${2:-image.bin}" target
+  mkdir -p "$SHARE_DIR"
+  target="$SHARE_DIR/$name"
+  # Uniquify like the browser would: name.ext -> name (1).ext
+  local n=1 stem="${name%.*}" ext="${name##*.}"
+  while [[ -e $target ]]; do
+    target="$SHARE_DIR/$stem ($((n++))).$ext"
+  done
+  if ! jq -r '.data // empty' | base64 -d > "$target" 2>/dev/null || [[ ! -s $target ]]; then
+    rm -f "$target"
+    omarchy-notification-send -u critical -g 󰅖 "Share failed" "Could not save image"
+    return 0
+  fi
+  dispatch_file "$app" "$target"
+}
+
 # --- video download (detached worker) -----------------------------------------
 
 osd_progress() {
@@ -158,6 +176,9 @@ main() {
     ;;
   file)
     dispatch_file "$app" "$(jq -r '.path // empty' <<<"$payload")"
+    ;;
+  blob)
+    receive_blob "$app" "$(jq -r '.name // empty' <<<"$payload")" <<<"$payload"
     ;;
   video)
     url=$(jq -r '.url // empty' <<<"$payload")
