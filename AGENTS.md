@@ -79,8 +79,13 @@ Files land in `SHARE_DIR="${MESSENGER_SHARE_DIR:-$HOME/Downloads}"`.
   `/reels/<code>`, and user-scoped variants; everything normalizes to
   `/p/<shortcode>/`. The reels viewer needs no content script — Instagram
   rewrites the URL to `/reels/<id>/` per reel as you scroll, so `pageUrl`
-  works. The home feed does: `extension/instagram-post-url.js` records the
-  post permalink under each right-click via the article's timestamp link
+  works. The home feed does not: feed videos are wrapped in their permalink
+  anchor (`<a href="/reels/<id>/">`), so right-clicks there are a **link**
+  context and `page`/`video` menu items never show — hence the link-scoped
+  `tg/vb-video-link` twins (`targetUrlPatterns` on instagram post/reel
+  hrefs), with `info.linkUrl` as the primary URL source.
+  `extension/instagram-post-url.js` is the fallback: it records the post
+  permalink under each right-click via the article's timestamp link
   (`a[href*="/p/"]:has(time)`); `/reels/audio/…` and profile `/user/reels/`
   links are decoys the shortcode regex must reject. Unlike X, Instagram keeps
   the native context menu on videos — no suppression needed. Stories are not

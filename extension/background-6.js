@@ -16,13 +16,19 @@ chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create({ id: 'vb', title: 'Share to Viber', contexts: ['link', 'image', 'selection', 'page'] });
     chrome.contextMenus.create({ id: 'tg-video', title: 'Download video → Telegram', contexts: ['page', 'video'] });
     chrome.contextMenus.create({ id: 'vb-video', title: 'Download video → Viber', contexts: ['page', 'video'] });
+    // Instagram wraps feed videos in their permalink anchor, which makes the
+    // right-click a 'link' context — the page/video items above never show
+    // there. These link-scoped twins appear only on post/reel hrefs.
+    const igPosts = ['https://www.instagram.com/p/*', 'https://www.instagram.com/reel/*', 'https://www.instagram.com/reels/*'];
+    chrome.contextMenus.create({ id: 'tg-video-link', title: 'Download video → Telegram', contexts: ['link'], targetUrlPatterns: igPosts });
+    chrome.contextMenus.create({ id: 'vb-video-link', title: 'Download video → Viber', contexts: ['link'], targetUrlPatterns: igPosts });
   });
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   const app = info.menuItemId.startsWith('tg') ? 'telegram' : 'viber';
 
-  if (String(info.menuItemId).endsWith('-video')) {
+  if (String(info.menuItemId).includes('-video')) {
     shareVideo(app, info, tab);
   } else if (info.mediaType === 'image' && info.srcUrl) {
     fetchAndShare(app, info.srcUrl);
@@ -65,7 +71,10 @@ async function shareVideo(app, info, tab) {
   // was under the right-click. Everything is normalized to /p/<shortcode>/,
   // which yt-dlp resolves anonymously for posts and reels alike.
   if (/^https:\/\/(?:www\.)?instagram\.com\//.test(info.pageUrl)) {
-    const post = info.pageUrl.match(/\/(?:p|reels?|tv)\/(?!audio\/)([\w-]+)/);
+    // Feed videos sit inside their permalink anchor, so linkUrl (when the
+    // click came from a link-context item) is the most precise source.
+    const post = (info.linkUrl || '').match(/\/(?:p|reels?|tv)\/(?!audio\/)([\w-]+)/)
+      || info.pageUrl.match(/\/(?:p|reels?|tv)\/(?!audio\/)([\w-]+)/);
     url = post ? 'https://www.instagram.com/p/' + post[1] + '/' : null;
     if (!url && tab && tab.id != null) {
       url = await chrome.tabs.sendMessage(tab.id, { type: 'get-post-url' })
