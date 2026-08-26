@@ -9,7 +9,7 @@ has() {
 }
 
 extension=false
-if [[ -f "$HOME/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/com.costa.messenger_share.json" ]]; then
+if [[ -f "$HOME/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/com.costa.yeet.json" ]]; then
   extension=true
 fi
 

@@ -1,6 +1,7 @@
-# omarchy-messenger-share — agent notes
+# omarchy-yeet — agent notes
 
-Share to Telegram/Viber on Omarchy. Three halves: an Omarchy shell
+Yeet: share to Telegram/Viber on Omarchy. ("Yeet" is the app name only —
+all user-facing copy says "Share to …", so future messengers slot in.) Three halves: an Omarchy shell
 bar-widget plugin (the repo root IS the plugin), a thin MV3 extension
 (context menus + X/Twitter, Instagram, and TikTok content scripts), and a
 bash native-messaging host that does all real work. Modeled on Omarchy's own
@@ -10,12 +11,12 @@ canonical idioms (framing, ack, detach, notifications).
 ## Architecture
 
 - `manifest.json` + `BarWidget.qml` + `Panel.qml` — the Omarchy shell plugin
-  (kind `bar-widget`, id `costafot.messenger-share`). `omarchy plugin add
+  (kind `bar-widget`, id `costafot.yeet`). `omarchy plugin add
   <repo> --enable` clones the whole repo into
-  `~/.config/omarchy/plugins/costafot.messenger-share/`, so the bash host
+  `~/.config/omarchy/plugins/costafot.yeet/`, so the bash host
   ships inside the plugin dir and the bar half needs no install.sh.
   BarWidget is a one-glyph button (modeled on agx.screen-time's — panel
-  shape contract + IpcHandler so `omarchy-shell costafot.messenger-share
+  shape contract + IpcHandler so `omarchy-shell costafot.yeet
   toggle` works from a keybinding). Panel is a `qs.Ui` KeyboardPanel:
   Telegram/Viber sections × Clipboard / File… / Video-from-copied-link rows,
   each row `Quickshell.execDetached`-ing `scripts/plugin-share`. Rows are
@@ -32,7 +33,7 @@ canonical idioms (framing, ack, detach, notifications).
 
 - `extension/background-N.js` — builds 4 context-menu items, resolves the
   click payload, sends `{app, kind, ...}` over
-  `chrome.runtime.sendNativeMessage('com.costa.messenger_share', ...)`.
+  `chrome.runtime.sendNativeMessage('com.costa.yeet', ...)`.
   Images are fetched IN the extension (cookies via `host_permissions:
   <all_urls>`) and streamed to the host as base64 (`kind: blob`).
 - `extension/twitter-tweet-url.js` — content script on x.com/twitter.com
@@ -47,12 +48,12 @@ canonical idioms (framing, ack, detach, notifications).
   answers `{type: 'get-tiktok-url'}` with the `/@user/video/<id>` permalink,
   and suppresses TikTok's custom video context menu. See the TikTok
   constraint below.
-- `host/messenger-share-host` — bash. Reads one framed message (4-byte LE
+- `host/yeet-host` — bash. Reads one framed message (4-byte LE
   length + JSON), acks `\x02\x00\x00\x00{}` immediately, dispatches.
   Kinds: `text` (clipboard + focus app), `file` (path on disk), `blob`
   (base64 → write to `$SHARE_DIR`, uniquify browser-style), `video`
   (yt-dlp in a detached systemd unit), `error` (toast only).
-- `nautilus/messenger-share.py` — nautilus-python extension (modeled on the
+- `nautilus/yeet.py` — nautilus-python extension (modeled on the
   localsend.py it sits next to): "Share to Telegram/Viber" on a single
   selected file, piping a `kind: file` framed message into the host. Finds
   the host via the Brave host manifest's `path` field (no baked-in paths);
@@ -83,8 +84,8 @@ canonical idioms (framing, ack, detach, notifications).
   unpacked" is dead as the install path; loading the same dir both ways is
   harmless (same ID).
 
-Files land in `SHARE_DIR="${MESSENGER_SHARE_DIR:-$HOME/Downloads}"`. User
-overrides live in `~/.config/omarchy-messenger-share/config` (plain shell,
+Files land in `SHARE_DIR="${YEET_DIR:-$HOME/Downloads}"`. User
+overrides live in `~/.config/omarchy-yeet/config` (plain shell,
 sourced by the host near the top, so both the framed-message path and the
 `--download` worker re-entry see it); env vars still work for CLI testing but
 Brave doesn't inherit the user's shell env, so the config file is the
@@ -169,7 +170,7 @@ user-facing mechanism.
   takes its place — that right-click is an image context and shares the
   poster frame; accepted edge case.
 - **Video quality**: `-S "res:${MAX_HEIGHT},proto,ext:mp4"` (default 720,
-  `MESSENGER_SHARE_MAX_HEIGHT` overrides). 720p because Viber sends files
+  `YEET_MAX_HEIGHT` overrides). 720p because Viber sends files
   through nearly byte-identical (measured: 16.2 MB sent → 15.4 MB received),
   so source size IS the recipient's download; Telegram/Viber compression
   tops out ~720p so higher sources are wasted either way. `proto` prefers
@@ -182,7 +183,7 @@ Pipe a framed message straight into the host:
 
 ```bash
 python3 -c 'import struct,sys,json; m=json.dumps({"app":"telegram","kind":"text","text":"hi"}).encode(); sys.stdout.buffer.write(struct.pack("<I",len(m))+m)' \
-  | ./host/messenger-share-host | od -c   # expect \x02\0\0\0{}
+  | ./host/yeet-host | od -c   # expect \x02\0\0\0{}
 ```
 
 Same shape for `file`/`blob`/`video`. Verify visually with
@@ -213,7 +214,7 @@ facts learned building it, don't re-derive:
   KeyboardPanel + PanelKeyCatcher, owner: hostWidget for the popout
   coordinator.
 - **Dev loop**: `rsync -a --delete --exclude .git --exclude key.pem . \
-  ~/.config/omarchy/plugins/costafot.messenger-share/` then
+  ~/.config/omarchy/plugins/costafot.yeet/` then
   `omarchy-restart-shell`. The shell's inotify live-reload fires
   (`Local plugin changed, reloading` in journal) but the running panel kept
   serving the OLD component in testing — restart to be sure. Validate with
@@ -223,8 +224,14 @@ facts learned building it, don't re-derive:
   COMMITTED — manifest.json/QML/scripts must be committed before a real
   `plugin add` test works (validation failed on the uncommitted tree,
   expected).
-- id `costafot.messenger-share` (matches the published costafot.autoduck
-  convention, not the io.github.* guess from earlier notes).
+- id `costafot.yeet` (matches the published costafot.autoduck
+  convention, not the io.github.* guess from earlier notes). Renamed from
+  `costafot.messenger-share` pre-marketplace (2026-08); nothing published
+  ever used the old id, but this machine's install did — migrating means
+  removing the old plugin id, the old `com.costa.messenger_share.json`
+  host manifest, the old `messenger-share.py` nautilus symlink, and the
+  old plugin dir's entry on the `--load-extension` line, then re-adding
+  the plugin and re-running install.sh.
 - Marketplace (HANCORE-linux/omarchy-plugin-marketplace →
   omarchyplugins.com): submission is an issue form (category
   `Productivity`, 1–3 tags); repo needs root README + license (both present
@@ -234,12 +241,12 @@ facts learned building it, don't re-derive:
   **Still to do: submit the listing.**
 - On this machine the installed plugin is a git clone whose origin is the
   local checkout (`~/Work/omarchy-messenger-share`), so
-  `omarchy plugin update costafot.messenger-share` pulls committed local
+  `omarchy plugin update costafot.yeet` pulls committed local
   work — handy for dev, but remember end users' clones point at GitHub.
 
 ## Deferred / ideas
 
 - `viber://forward?text=...` deep link might beat clipboard+focus for
   text/links to Viber — untested.
-- A settings `panel` kind (edit `~/.config/omarchy-messenger-share/config`
+- A settings `panel` kind (edit `~/.config/omarchy-yeet/config`
   from the shell) remains the stretch goal from the original plan.

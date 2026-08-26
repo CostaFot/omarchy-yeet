@@ -13,11 +13,11 @@ from gi.repository import GObject, Gio, GLib, Nautilus
 # needs no path baked in at install time.
 HOST_MANIFEST = os.path.join(
     GLib.get_user_config_dir(),
-    "BraveSoftware/Brave-Browser/NativeMessagingHosts/com.costa.messenger_share.json",
+    "BraveSoftware/Brave-Browser/NativeMessagingHosts/com.costa.yeet.json",
 )
 
 
-class MessengerShareAction(GObject.GObject, Nautilus.MenuProvider):
+class YeetShareAction(GObject.GObject, Nautilus.MenuProvider):
     def _host_path(self):
         try:
             with open(HOST_MANIFEST) as f:
@@ -75,14 +75,14 @@ class MessengerShareAction(GObject.GObject, Nautilus.MenuProvider):
 
         return [
             self._make_item(
-                "MessengerShare::telegram",
+                "YeetShare::telegram",
                 "Share to Telegram",
                 "org.telegram.desktop",
                 "telegram",
                 path,
             ),
             self._make_item(
-                "MessengerShare::viber",
+                "YeetShare::viber",
                 "Share to Viber",
                 "viber",
                 "viber",

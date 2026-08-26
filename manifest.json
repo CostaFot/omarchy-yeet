@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "id": "costafot.messenger-share",
-  "name": "Messenger Share",
+  "id": "costafot.yeet",
+  "name": "Yeet",
   "version": "1.0.0",
   "author": "CostaFot",
   "license": "MIT",
@@ -13,10 +13,10 @@
     "barWidget": "BarWidget.qml"
   },
   "barWidget": {
-    "displayName": "Messenger Share",
+    "displayName": "Yeet",
     "description": "One share icon: clipboard, file picker, or yt-dlp video handoff to Telegram and Viber",
     "category": "Productivity",
-    "aliases": ["share", "messenger"],
+    "aliases": ["share", "messenger", "yeet"],
     "allowMultiple": false,
     "defaultSection": "right"
   }

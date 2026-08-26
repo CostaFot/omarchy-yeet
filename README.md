@@ -1,4 +1,4 @@
-# omarchy-messenger-share
+# Yeet
 
 <img src="assets/modern-solutions.jpg" width="300" alt="the architecture diagram">
 
@@ -12,11 +12,11 @@ drag-drop routine with one click.
 <img src="preview.png" width="374" alt="the share panel">
 
 ```bash
-omarchy plugin add https://github.com/CostaFot/omarchy-messenger-share --enable
+omarchy plugin add https://github.com/CostaFot/omarchy-yeet --enable
 ```
 
 That puts a 󰒖 icon in the bar. Click it (or `omarchy-shell
-costafot.messenger-share toggle` from a keybinding) and pick a row:
+costafot.yeet toggle` from a keybinding) and pick a row:
 
 | Row | What happens |
 |---|---|
@@ -68,7 +68,7 @@ The Brave + Files half needs one more step, either from the panel's **Set up
 browser sharing…** row or by hand:
 
 ```bash
-~/.config/omarchy/plugins/costafot.messenger-share/install.sh
+~/.config/omarchy/plugins/costafot.yeet/install.sh
 ```
 
 Then restart Brave. That's it — no developer mode, no Load unpacked.
@@ -86,8 +86,8 @@ same, minus the bar widget.
 ## Uninstall
 
 ```bash
-~/.config/omarchy/plugins/costafot.messenger-share/install.sh --uninstall
-omarchy plugin remove costafot.messenger-share
+~/.config/omarchy/plugins/costafot.yeet/install.sh --uninstall
+omarchy plugin remove costafot.yeet
 ```
 
 Then restart Brave — the extension unloads with the flag.
@@ -111,12 +111,12 @@ Then restart Brave — the extension unloads with the flag.
   unchanged — every extra pixel is bytes your friends download — and the apps'
   own compression tops out around 720p anyway.
 - Downloaded media stays in `~/Downloads`.
-- Both are overridable in `~/.config/omarchy-messenger-share/config`
+- Both are overridable in `~/.config/omarchy-yeet/config`
   (plain shell, sourced by the host — takes effect on the next share):
 
   ```sh
-  MESSENGER_SHARE_DIR="$HOME/Videos/shares"
-  MESSENGER_SHARE_MAX_HEIGHT=1080
+  YEET_DIR="$HOME/Videos/shares"
+  YEET_MAX_HEIGHT=1080
   ```
 - Downloads run as a transient systemd user unit — closing Brave mid-download
   doesn't kill them.
@@ -125,5 +125,5 @@ Then restart Brave — the extension unloads with the flag.
 - Heads up for the security-minded: the browser extension talks to a
   native-messaging host — a bash script on your machine that Brave is allowed
   to start. That's the entire mechanism, it's ~200 lines, and it's in
-  [`host/messenger-share-host`](host/messenger-share-host). Read it before
+  [`host/yeet-host`](host/yeet-host). Read it before
   installing; that's what it's there for.

@@ -4,13 +4,13 @@ import Quickshell.Io
 import qs.Commons
 import qs.Ui
 
-// Popup for the Messenger Share bar widget: clipboard / file / video rows
+// Popup for the Yeet bar widget: clipboard / file / video rows
 // per messenger, plus a setup row for the optional Brave right-click half.
 // Every action closes the panel and hands off to scripts/plugin-share; the
 // panel itself never talks to Telegram or Viber.
 Panel {
   id: root
-  moduleName: "costafot.messenger-share"
+  moduleName: "costafot.yeet"
 
   property var anchorItem: null
   property var hostWidget: null
@@ -108,7 +108,7 @@ Panel {
       waitForEnd: true
       onStreamFinished: {
         try { root.status = JSON.parse(text) } catch (e) {
-          console.warn("costafot.messenger-share: bad status probe output:", text)
+          console.warn("costafot.yeet: bad status probe output:", text)
         }
       }
     }

@@ -5,10 +5,10 @@ import qs.Ui
 // Bar widget: one share icon whose popup (Panel.qml) lists the share actions
 // for Telegram and Viber. All real work happens in scripts/plugin-share,
 // which pipes the same framed messages the browser extension sends into the
-// bundled native-messaging host (host/messenger-share-host).
+// bundled native-messaging host (host/yeet-host).
 BarWidget {
   id: root
-  moduleName: "costafot.messenger-share"
+  moduleName: "costafot.yeet"
 
   readonly property string glyph: "󰒖"
 
@@ -52,9 +52,9 @@ BarWidget {
   }
 
   // Direct IPC target, so a Hyprland keybinding can summon the panel:
-  //   omarchy-shell costafot.messenger-share toggle
+  //   omarchy-shell costafot.yeet toggle
   IpcHandler {
-    target: "costafot.messenger-share"
+    target: "costafot.yeet"
     function open(): void { root.open() }
     function close(): void { root.close() }
     function show(): void { root.open() }
@@ -67,7 +67,7 @@ BarWidget {
     anchors.fill: parent
     bar: root.bar
     text: root.glyph
-    tooltipText: "Share to Telegram / Viber"
+    tooltipText: "Share to…"
     onPressed: root.togglePanel()
   }
 }

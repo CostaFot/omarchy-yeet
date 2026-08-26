@@ -1,7 +1,7 @@
 // Bump the numeric suffix (and the manifest reference) when editing this file:
 // Chromium can keep serving a cached service worker under the old name.
 
-const HOST = 'com.costa.messenger_share';
+const HOST = 'com.costa.yeet';
 
 // The native host owns all desktop notifications, so we hand off and ignore the reply.
 function send(msg) {

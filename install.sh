@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Installs the browser half of Messenger Share: the Brave native host
+# Installs the browser half of Yeet: the Brave native host
 # manifest pointing at this checkout's host script, the extension itself via
 # --load-extension in ~/.config/brave-flags.conf (the same mechanism Omarchy
 # uses for its own bundled extensions — no developer mode, no Load unpacked),
@@ -14,7 +14,7 @@
 set -euo pipefail
 
 PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-HOST_NAME="com.costa.messenger_share"
+HOST_NAME="com.costa.yeet"
 BRAVE_HOSTS_DIR="$HOME/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts"
 NAUTILUS_EXT_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/nautilus-python/extensions"
 FLAGS_FILE="$HOME/.config/brave-flags.conf"
@@ -35,9 +35,9 @@ if [[ ${1:-} == "--uninstall" ]]; then
   rm -f "$BRAVE_HOSTS_DIR/$HOST_NAME.json"
   echo "Removed $BRAVE_HOSTS_DIR/$HOST_NAME.json"
   remove_flag_entry
-  if [[ -L $NAUTILUS_EXT_DIR/messenger-share.py ]]; then
-    rm -f "$NAUTILUS_EXT_DIR/messenger-share.py"
-    echo "Removed $NAUTILUS_EXT_DIR/messenger-share.py (restart Files: nautilus -q)"
+  if [[ -L $NAUTILUS_EXT_DIR/yeet.py ]]; then
+    rm -f "$NAUTILUS_EXT_DIR/yeet.py"
+    echo "Removed $NAUTILUS_EXT_DIR/yeet.py (restart Files: nautilus -q)"
   fi
   echo "Restart Brave and the extension is gone."
   exit 0
@@ -58,10 +58,10 @@ if [[ -z $PUB_DER_B64 ]]; then
 fi
 EXT_ID=$(base64 -d <<<"$PUB_DER_B64" | sha256sum | head -c32 | tr '0-9a-f' 'a-p')
 
-chmod +x host/messenger-share-host
+chmod +x host/yeet-host
 
 mkdir -p "$BRAVE_HOSTS_DIR"
-sed "s|__HOST_PATH__|$PROJECT_DIR/host/messenger-share-host|; s|__EXTENSION_ID__|$EXT_ID|" \
+sed "s|__HOST_PATH__|$PROJECT_DIR/host/yeet-host|; s|__EXTENSION_ID__|$EXT_ID|" \
   host/$HOST_NAME.json.template > "$BRAVE_HOSTS_DIR/$HOST_NAME.json"
 
 echo "Installed native host manifest: $BRAVE_HOSTS_DIR/$HOST_NAME.json"
@@ -86,8 +86,8 @@ fi
 # host path from the manifest installed above, so it needs no configuration.
 if [[ -e /usr/lib/nautilus/extensions-4/libnautilus-python.so ]]; then
   mkdir -p "$NAUTILUS_EXT_DIR"
-  ln -sfT "$PROJECT_DIR/nautilus/messenger-share.py" "$NAUTILUS_EXT_DIR/messenger-share.py"
-  echo "Installed Nautilus extension: $NAUTILUS_EXT_DIR/messenger-share.py (restart Files: nautilus -q)"
+  ln -sfT "$PROJECT_DIR/nautilus/yeet.py" "$NAUTILUS_EXT_DIR/yeet.py"
+  echo "Installed Nautilus extension: $NAUTILUS_EXT_DIR/yeet.py (restart Files: nautilus -q)"
 fi
 echo
 echo "Extension ID: $EXT_ID"

@@ -1,6 +1,6 @@
 {
-  "name": "com.costa.messenger_share",
-  "description": "Messenger Share native host (Telegram/Viber)",
+  "name": "com.costa.yeet",
+  "description": "Yeet native host (Telegram/Viber)",
   "path": "__HOST_PATH__",
   "type": "stdio",
   "allowed_origins": [

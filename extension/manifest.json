@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Messenger Share",
+  "name": "Yeet",
   "version": "1.0",
   "description": "Right-click share links, images, and videos to Telegram and Viber via Omarchy",
   "permissions": [
@@ -13,7 +13,7 @@
     "128": "icon.png"
   },
   "background": {
-    "service_worker": "background-8.js"
+    "service_worker": "background-9.js"
   },
   "content_scripts": [
     {

@@ -14,7 +14,7 @@ export OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
 export PATH="$OMARCHY_PATH/bin:/usr/local/bin:/usr/bin:$PATH"
 
 PLUGIN_DIR="$(cd -- "$(dirname -- "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
-HOST="$PLUGIN_DIR/host/messenger-share-host"
+HOST="$PLUGIN_DIR/host/yeet-host"
 
 APP="${1:-}"
 MODE="${2:-}"
