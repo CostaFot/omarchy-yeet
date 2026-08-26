@@ -2,7 +2,7 @@
 
 Share to Telegram/Viber on Omarchy. Three halves: an Omarchy shell
 bar-widget plugin (the repo root IS the plugin), a thin MV3 extension
-(context menus + X/Twitter and Instagram content scripts), and a
+(context menus + X/Twitter, Instagram, and TikTok content scripts), and a
 bash native-messaging host that does all real work. Modeled on Omarchy's own
 `/usr/share/omarchy/bin/omarchy-chromium-ytdlp-host` — read that for the
 canonical idioms (framing, ack, detach, notifications).
@@ -189,16 +189,14 @@ Same shape for `file`/`blob`/`video`. Verify visually with
 `grim -g "$(hyprctl clients -j | jq -r '...')"` screenshots; drive paste
 tests with `wtype -M ctrl -k v -m ctrl`. Test video:
 `https://www.youtube.com/watch?v=jNQXAC9IVRw` (19s). Extension changes need
-a reload in `brave://extensions` (plus a refresh of any open x.com tabs to
-re-inject the content script); host-manifest changes need a Brave restart;
-host-script changes apply on next right-click.
+a Brave restart (the extension loads via `--load-extension`, read at
+startup — and remember the service-worker cache constraint: bump the
+background-N.js filename), plus a refresh of any open x.com/tiktok.com tabs
+to re-inject the content scripts; host-manifest changes need a Brave
+restart; host-script changes apply on next right-click. Plugin changes:
+see the dev loop in the plugin section below.
 
-## Deferred / ideas
-
-- `viber://forward?text=...` deep link might beat clipboard+focus for
-  text/links to Viber — untested.
-
-### Omarchy shell plugin — built 2026-08, all verified live
+## Omarchy shell plugin — built 2026-08, all verified live
 
 The `bar-widget` plugin shipped (see Architecture). Design decisions and
 facts learned building it, don't re-derive:
@@ -233,5 +231,15 @@ facts learned building it, don't re-derive:
   now) + preview.png (present); listings get an exact-commit security scan.
   Expect scrutiny: the bundled native-messaging host is browser-reachable
   code execution — the README's last Note discloses it deliberately.
-  **Still to do: submit the listing** (needs the plugin files committed +
-  pushed first).
+  **Still to do: submit the listing.**
+- On this machine the installed plugin is a git clone whose origin is the
+  local checkout (`~/Work/omarchy-messenger-share`), so
+  `omarchy plugin update costafot.messenger-share` pulls committed local
+  work — handy for dev, but remember end users' clones point at GitHub.
+
+## Deferred / ideas
+
+- `viber://forward?text=...` deep link might beat clipboard+focus for
+  text/links to Viber — untested.
+- A settings `panel` kind (edit `~/.config/omarchy-messenger-share/config`
+  from the shell) remains the stretch goal from the original plan.

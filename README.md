@@ -20,7 +20,7 @@ costafot.messenger-share toggle` from a keybinding) and pick a row:
 
 | Row | What happens |
 |---|---|
-| **Clipboard** | Text: the app is focused, Ctrl+V in a chat. An image (screenshots): saved and sent like any image share |
+| **Clipboard** | Text/link: the app is focused, paste in a chat — it's already on your clipboard. An image (screenshots): saved and sent like any image share |
 | **File…** | File chooser opens, pick one, it's handed to the app |
 | **Video from copied link** | yt-dlp grabs the video (mp4, ≤720p) from the URL you copied, with live progress in the Omarchy OSD, then hands it off |
 
