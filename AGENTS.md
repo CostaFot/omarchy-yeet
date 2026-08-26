@@ -82,7 +82,8 @@ canonical idioms (framing, ack, detach, notifications).
   The old generate-key.pem-and-inject path survives as a fallback for forks
   that strip the key. Everything user-level, no sudo.
   **The extension installs with no manual browser steps** (verified
-  2026-08 on Brave): install.sh appends the extension dir to the
+  2026-08 on Brave and Chromium): install.sh appends the extension dir to
+  the
   `--load-extension=` line in `~/.config/brave-flags.conf` /
   `~/.config/chromium-flags.conf` — the exact mechanism Omarchy uses for
   its own bundled extensions (copy-url, yt-dlp, whatsapp-slim live on the

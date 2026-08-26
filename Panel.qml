@@ -59,7 +59,7 @@ Panel {
     if (!s.extension) {
       out.push({ type: "sep" })
       out.push({ type: "action", icon: "󰖟", label: "Set up browser sharing…",
-                 detail: "Right-click share in the browser and Files",
+                 detail: "Right-click share, browser & Files",
                  action: "setup" })
     }
     return out
