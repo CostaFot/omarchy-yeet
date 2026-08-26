@@ -64,6 +64,9 @@ Then remove the extension in `brave://extensions` and delete this folder.
 - On X/Twitter, right-click a video (or anywhere on its tweet) and pick
   **Download video** — the extension figures out which tweet you clicked, even
   from the timeline. X's own video menu is suppressed so the browser menu shows.
+- Instagram works the same: right-click a video in the home feed, the reels
+  viewer, or an open post and pick **Download video**. Posts and reels only —
+  stories are login-gated and not supported.
 - Video downloads run as a transient systemd user unit, so closing Brave
   mid-download doesn't kill them.
 - Images with `blob:` URLs can't be fetched and will show a "Share failed"
