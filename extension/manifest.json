@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Messenger Share",
+  "version": "1.0",
+  "description": "Right-click share links, images, and videos to Telegram and Viber via Omarchy",
+  "permissions": [
+    "contextMenus",
+    "nativeMessaging",
+    "downloads",
+    "storage"
+  ],
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApXbhuQObhAPYH/1bWABhaGZ246CfS65OsOpOeBv/CooW0qVkYco+qD4E5fv4ZcMriwPiVIcDojIcqBJkVj4JdFKNedwfEoat3cJJ4u8UW8fMcBgIL60nFYbAx6ZOeIj4mwFYcRQTASiCz72HYzxIi7qJSNI8btksN8nBlxshGXF8wLAjlLsb5/tGMgw7Nssh/orQvTyaC5P9R4LSJ7zJnQD/1OB97EL3Rbm81c/TShoFZbl2TMTVkno/IRKw3rBmJoOMSzzFzGJpqbXpOJrcFo7FTVoMrOCxICMUAyDmXaxmgy1ic7TQPwSqtcUrnGQjbeai5sVJo/tLN+cdKVe/twIDAQAB"
+}

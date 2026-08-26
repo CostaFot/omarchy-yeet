@@ -1,0 +1,176 @@
+#!/bin/bash
+
+# Native messaging host for the Messenger Share Brave extension.
+# Dispatches links/text, downloaded files, and yt-dlp video downloads
+# to Telegram (chat picker) or Viber (clipboard + focus).
+
+set -euo pipefail
+
+SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
+
+# The browser launches us without Omarchy's environment; omarchy-shell (used by
+# omarchy-osd) silently no-ops unless OMARCHY_PATH is set.
+export OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
+export PATH="$OMARCHY_PATH/bin:/usr/local/bin:/usr/bin:$PATH"
+
+SHARE_DIR="${MESSENGER_SHARE_DIR:-$HOME/Downloads}"
+
+# --- app targets --------------------------------------------------------------
+
+# All launches go through uwsm-app synchronously: it only hands the command to
+# the uwsm app daemon (the app runs in its own unit) and returns immediately.
+# Forked/backgrounded callers here get cgroup-killed when the systemd-run video
+# worker exits before the handoff completes, so never fire-and-forget these.
+focus_telegram() {
+  omarchy-launch-or-focus 'org.telegram.desktop' 'uwsm-app -- Telegram' </dev/null >/dev/null 2>&1 || true
+}
+
+focus_viber() {
+  omarchy-launch-or-focus 'viber(pc)?' 'uwsm-app -- viber' </dev/null >/dev/null 2>&1 || true
+}
+
+telegram_send_file() {
+  # Telegram is single-instance: a second invocation forwards the file to the
+  # running app, which opens its "Send to..." chat picker.
+  uwsm-app -- Telegram -- "$1" </dev/null >/dev/null 2>&1 || true
+}
+
+viber_send_file() {
+  local file="$1" mime
+  mime=$(file --brief --mime-type "$file")
+  if [[ $mime == image/* ]]; then
+    omarchy-clipboard-paste-file --copy-only "$mime" "$file"
+  else
+    # Qt chat inputs treat a pasted uri-list like a file drop.
+    printf 'file://%s\n' "$file" | wl-copy --type text/uri-list
+  fi
+  omarchy-notification-send -g 󰅍 "Copied — press Ctrl+V in a Viber chat" "$(basename "$file")"
+  focus_viber
+}
+
+# --- dispatch -----------------------------------------------------------------
+
+dispatch_text() {
+  local app="$1" text="$2"
+  [[ -n $text ]] || return 0
+  printf '%s' "$text" | wl-copy --type text/plain
+  omarchy-notification-send -g 󰅍 "Copied — press Ctrl+V in a ${app^} chat"
+  if [[ $app == telegram ]]; then focus_telegram; else focus_viber; fi
+}
+
+dispatch_file() {
+  local app="$1" file="$2"
+  [[ -f $file ]] || return 0
+  if [[ $app == telegram ]]; then telegram_send_file "$file"; else viber_send_file "$file"; fi
+}
+
+# --- video download (detached worker) -----------------------------------------
+
+osd_progress() {
+  omarchy-osd -i 󰇚 -p "$1" -d 8000 >/dev/null 2>&1 || true
+}
+
+osd_close() {
+  omarchy-shell -q osd close >/dev/null 2>&1 || true
+}
+
+download_and_share() {
+  local app="$1" url="$2"
+
+  mkdir -p "$SHARE_DIR"
+
+  # Don't show anything until yt-dlp confirms there's actually a video to grab.
+  if ! yt-dlp --no-playlist --simulate --quiet --no-warnings "$url" >/dev/null 2>&1; then
+    omarchy-notification-send -u critical -g 󰅖 "No video found" "$url"
+    exit 0
+  fi
+
+  osd_progress 0
+
+  # Stream the download: OMARCHY_PROG carries the percent (drives the OSD),
+  # OMARCHY_FILE (printed only after a successful move) carries the path.
+  local line pct intpct last="" er nowms lastms=0 filepath=""
+  while IFS= read -r line; do
+    case $line in
+    OMARCHY_PROG*)
+      pct=${line#OMARCHY_PROG$'\t'}
+      intpct=${pct%%.*}
+      intpct=${intpct//[^0-9]/}
+      [[ -n $intpct && $intpct != "$last" ]] || continue
+      er=$EPOCHREALTIME
+      nowms=$((${er%[.,]*} * 1000 + 10#${er##*[.,]} / 1000))
+      ((nowms - lastms >= 250)) || continue
+      last=$intpct
+      lastms=$nowms
+      osd_progress "$intpct"
+      ;;
+    OMARCHY_FILE*)
+      filepath=${line#OMARCHY_FILE$'\t'}
+      ;;
+    esac
+  done < <(PYTHONUNBUFFERED=1 yt-dlp --no-playlist --restrict-filenames --no-simulate \
+    --quiet --no-warnings --progress --newline \
+    --progress-template $'download:OMARCHY_PROG\t%(progress._percent_str)s' \
+    -f 'bv*[ext=mp4][height<=1080]+ba[ext=m4a]/b[ext=mp4]/b' --merge-output-format mp4 \
+    --paths "$SHARE_DIR" -o '%(title).80s [%(id)s].%(ext)s' \
+    --print $'after_move:OMARCHY_FILE\t%(filepath)s' \
+    "$url" 2>&1)
+
+  osd_close
+
+  # after_move only prints on a successful download+move, so a captured path == success.
+  if [[ -n $filepath && -f $filepath ]]; then
+    omarchy-notification-send -g 󰄬 "Video ready" "$(basename "$filepath")" || true
+    dispatch_file "$app" "$filepath"
+  else
+    omarchy-notification-send -u critical -g 󰅖 "Video download failed" "$url"
+  fi
+
+  exit 0
+}
+
+# --- main ---------------------------------------------------------------------
+
+main() {
+  local length payload app kind url
+
+  # Detached worker re-entry: this is what actually runs yt-dlp.
+  if [[ "${1:-}" == "--download" ]]; then
+    download_and_share "$2" "$3"
+  fi
+
+  # Native messaging frame: 4-byte little-endian length prefix, then UTF-8 JSON.
+  length=$(head -c4 | od -An -v -tu4 --endian=little | tr -d ' ')
+  [[ -n ${length:-} ]] && ((length > 0)) || exit 0
+
+  payload=$(head -c "$length")
+
+  # Ack with an empty message so the extension's sendNativeMessage callback resolves cleanly.
+  printf '\x02\x00\x00\x00{}'
+
+  app=$(jq -r '.app // empty' 2>/dev/null <<<"$payload" || true)
+  kind=$(jq -r '.kind // empty' 2>/dev/null <<<"$payload" || true)
+  [[ $app == telegram || $app == viber || $kind == error ]] || exit 0
+
+  case $kind in
+  text)
+    dispatch_text "$app" "$(jq -r '.text // empty' <<<"$payload")"
+    ;;
+  file)
+    dispatch_file "$app" "$(jq -r '.path // empty' <<<"$payload")"
+    ;;
+  video)
+    url=$(jq -r '.url // empty' <<<"$payload")
+    [[ $url =~ ^https?:// ]] || exit 0
+    # A transient unit (not setsid) so a long download survives the browser closing.
+    systemd-run --user --quiet --collect "$SCRIPT_PATH" --download "$app" "$url"
+    ;;
+  error)
+    omarchy-notification-send -u critical -g 󰅖 "Share failed" "$(jq -r '.message // empty' <<<"$payload")"
+    ;;
+  esac
+}
+
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+  main "$@"
+fi
