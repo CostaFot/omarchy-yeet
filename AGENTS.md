@@ -1,8 +1,8 @@
 # omarchy-messenger-share — agent notes
 
 Right-click share from Brave to Telegram/Viber on Omarchy. Two halves:
-a thin MV3 extension (context menus only) and a bash native-messaging host
-that does all real work. Modeled on Omarchy's own
+a thin MV3 extension (context menus + one X/Twitter content script) and a
+bash native-messaging host that does all real work. Modeled on Omarchy's own
 `/usr/share/omarchy/bin/omarchy-chromium-ytdlp-host` — read that for the
 canonical idioms (framing, ack, detach, notifications).
 
@@ -13,6 +13,11 @@ canonical idioms (framing, ack, detach, notifications).
   `chrome.runtime.sendNativeMessage('com.costa.messenger_share', ...)`.
   Images are fetched IN the extension (cookies via `host_permissions:
   <all_urls>`) and streamed to the host as base64 (`kind: blob`).
+- `extension/twitter-tweet-url.js` — content script on x.com/twitter.com
+  (`run_at: document_start`). Tracks the tweet under each right-click and
+  answers the background's `{type: 'get-tweet-url'}` message with its
+  `/status/` URL; also suppresses X's custom video context menu. See the
+  X/Twitter constraint below for the why.
 - `host/messenger-share-host` — bash. Reads one framed message (4-byte LE
   length + JSON), acks `\x02\x00\x00\x00{}` immediately, dispatches.
   Kinds: `text` (clipboard + focus app), `file` (path on disk), `blob`
@@ -78,8 +83,9 @@ Same shape for `file`/`blob`/`video`. Verify visually with
 `grim -g "$(hyprctl clients -j | jq -r '...')"` screenshots; drive paste
 tests with `wtype -M ctrl -k v -m ctrl`. Test video:
 `https://www.youtube.com/watch?v=jNQXAC9IVRw` (19s). Extension changes need
-a reload in `brave://extensions`; host-manifest changes need a Brave
-restart; host-script changes apply on next right-click.
+a reload in `brave://extensions` (plus a refresh of any open x.com tabs to
+re-inject the content script); host-manifest changes need a Brave restart;
+host-script changes apply on next right-click.
 
 ## Deferred / ideas
 
