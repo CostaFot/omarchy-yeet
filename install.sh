@@ -9,10 +9,15 @@ set -euo pipefail
 PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 HOST_NAME="com.costa.messenger_share"
 BRAVE_HOSTS_DIR="$HOME/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts"
+NAUTILUS_EXT_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/nautilus-python/extensions"
 
 if [[ ${1:-} == "--uninstall" ]]; then
   rm -f "$BRAVE_HOSTS_DIR/$HOST_NAME.json"
   echo "Removed $BRAVE_HOSTS_DIR/$HOST_NAME.json"
+  if [[ -L $NAUTILUS_EXT_DIR/messenger-share.py ]]; then
+    rm -f "$NAUTILUS_EXT_DIR/messenger-share.py"
+    echo "Removed $NAUTILUS_EXT_DIR/messenger-share.py (restart Files: nautilus -q)"
+  fi
   echo "Now remove the extension in brave://extensions."
   exit 0
 fi
@@ -36,6 +41,15 @@ sed "s|__HOST_PATH__|$PROJECT_DIR/host/messenger-share-host|; s|__EXTENSION_ID__
   host/$HOST_NAME.json.template > "$BRAVE_HOSTS_DIR/$HOST_NAME.json"
 
 echo "Installed native host manifest: $BRAVE_HOSTS_DIR/$HOST_NAME.json"
+
+# Nautilus right-click "Share to ..." (needs the nautilus-python package).
+# Symlinked so the repo stays the source of truth; the extension reads the
+# host path from the manifest installed above, so it needs no configuration.
+if [[ -e /usr/lib/nautilus/extensions-4/libnautilus-python.so ]]; then
+  mkdir -p "$NAUTILUS_EXT_DIR"
+  ln -sfT "$PROJECT_DIR/nautilus/messenger-share.py" "$NAUTILUS_EXT_DIR/messenger-share.py"
+  echo "Installed Nautilus extension: $NAUTILUS_EXT_DIR/messenger-share.py (restart Files: nautilus -q)"
+fi
 echo
 echo "Extension ID: $EXT_ID"
 echo

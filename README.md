@@ -21,11 +21,21 @@ Viber has no command line and its input **only** accepts pasted images, so
 non-image files (videos mostly) get a Files window opened next to Viber with
 the file pre-selected — drag it into the chat. I don't make the rules.
 
+## From Files (Nautilus)
+
+<img src="assets/files-menu.png" width="360" alt="the Files context menu">
+
+The same two items show up when you right-click a file in Files —
+`install.sh` sets this up automatically if `nautilus-python` is installed.
+Same rules as above: Telegram opens its chat picker, Viber takes images via
+clipboard and everything else via drag. One file at a time.
+
 ## Requirements
 
 Omarchy (uses `omarchy-launch-or-focus`, `omarchy-notification-send`,
 `omarchy-osd`, `omarchy-clipboard-paste-file`), Brave, `telegram-desktop`,
-`viber`, `yt-dlp`, `wl-clipboard`, `jq`, `openssl`.
+`viber`, `yt-dlp`, `wl-clipboard`, `jq`, `openssl`. Optional:
+`nautilus-python` for the Files right-click.
 
 ## Install
 
@@ -43,9 +53,11 @@ Then:
 4. Restart Brave once (native-host manifests are read at startup)
 
 `install.sh` generates a local `key.pem` (gitignored) that pins the extension
-ID, and writes one file outside the repo:
-`~/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/com.costa.messenger_share.json`.
-No sudo, nothing system-wide.
+ID, and writes two things outside the repo: the Brave native-host manifest in
+`~/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/` and a symlink
+for the Files extension in `~/.local/share/nautilus-python/extensions/`
+(restart Files with `nautilus -q` to pick it up). No sudo, nothing
+system-wide.
 
 ## Uninstall
 

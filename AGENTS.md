@@ -31,6 +31,14 @@ canonical idioms (framing, ack, detach, notifications).
   Kinds: `text` (clipboard + focus app), `file` (path on disk), `blob`
   (base64 → write to `$SHARE_DIR`, uniquify browser-style), `video`
   (yt-dlp in a detached systemd unit), `error` (toast only).
+- `nautilus/messenger-share.py` — nautilus-python extension (modeled on the
+  localsend.py it sits next to): "Share to Telegram/Viber" on a single
+  selected file, piping a `kind: file` framed message into the host. Finds
+  the host via the Brave host manifest's `path` field (no baked-in paths);
+  items hide when that manifest is missing. Single-file only: Telegram's
+  forward picker and Viber's clipboard don't stack across a multi-selection.
+  Installed as a symlink by `install.sh` (removed by `--uninstall`);
+  Nautilus loads extensions at startup, so changes need `nautilus -q`.
 - `install.sh` — generates `key.pem` (gitignored), pins the extension ID
   by injecting `key` into the manifest, computes the ID
   (sha256 of DER pubkey, first 32 hex chars mapped 0-9a-f→a-p), writes the
@@ -149,9 +157,6 @@ host-script changes apply on next right-click.
 
 ## Deferred / ideas
 
-- Nautilus right-click "Share to…" — clone
-  `~/.local/share/nautilus-python/extensions/localsend.py`, reuse this host's
-  dispatch functions.
 - Omarchy Share menu rows (`trigger.share.*` in
   `~/.config/omarchy/extensions/omarchy-menu.jsonc`) for clipboard/file-picker
   sharing outside the browser.
