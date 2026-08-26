@@ -1,7 +1,8 @@
 # omarchy-messenger-share — agent notes
 
 Right-click share from Brave to Telegram/Viber on Omarchy. Two halves:
-a thin MV3 extension (context menus + one X/Twitter content script) and a
+a thin MV3 extension (context menus + X/Twitter and Instagram content
+scripts) and a
 bash native-messaging host that does all real work. Modeled on Omarchy's own
 `/usr/share/omarchy/bin/omarchy-chromium-ytdlp-host` — read that for the
 canonical idioms (framing, ack, detach, notifications).
@@ -18,6 +19,9 @@ canonical idioms (framing, ack, detach, notifications).
   answers the background's `{type: 'get-tweet-url'}` message with its
   `/status/` URL; also suppresses X's custom video context menu. See the
   X/Twitter constraint below for the why.
+- `extension/instagram-post-url.js` — same idea for Instagram's home feed:
+  answers `{type: 'get-post-url'}` with the `/p/<shortcode>/` permalink of
+  the post under the right-click. See the Instagram constraint below.
 - `host/messenger-share-host` — bash. Reads one framed message (4-byte LE
   length + JSON), acks `\x02\x00\x00\x00{}` immediately, dispatches.
   Kinds: `text` (clipboard + focus app), `file` (path on disk), `blob`
@@ -69,6 +73,18 @@ Files land in `SHARE_DIR="${MESSENGER_SHARE_DIR:-$HOME/Downloads}"`.
   document-capture wins even when registered late. yt-dlp resolves x.com
   status URLs anonymously (no cookies) and follows quote-tweets to the quoted
   video.
+- **Instagram videos** (verified live 2026-08): same shape as X — video `src`
+  is `blob:`, home-feed `pageUrl` is bare `instagram.com/`. yt-dlp resolves
+  posts and reels anonymously (no cookies) at `/p/<code>`, `/reel/<code>`,
+  `/reels/<code>`, and user-scoped variants; everything normalizes to
+  `/p/<shortcode>/`. The reels viewer needs no content script — Instagram
+  rewrites the URL to `/reels/<id>/` per reel as you scroll, so `pageUrl`
+  works. The home feed does: `extension/instagram-post-url.js` records the
+  post permalink under each right-click via the article's timestamp link
+  (`a[href*="/p/"]:has(time)`); `/reels/audio/…` and profile `/user/reels/`
+  links are decoys the shortcode regex must reject. Unlike X, Instagram keeps
+  the native context menu on videos — no suppression needed. Stories are not
+  handled (login-gated in yt-dlp).
 - **Video quality**: `-S "res:${MAX_HEIGHT},proto,ext:mp4"` (default 720,
   `MESSENGER_SHARE_MAX_HEIGHT` overrides). 720p because Viber sends files
   through nearly byte-identical (measured: 16.2 MB sent → 15.4 MB received),

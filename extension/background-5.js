@@ -59,6 +59,25 @@ async function shareVideo(app, info, tab) {
     }
   }
 
+  // Instagram: same story — feed videos are blob: sources on a pageUrl of
+  // just instagram.com/. The reels viewer rewrites pageUrl to /reels/<id>/
+  // as you scroll, so try that first, then ask the content script which post
+  // was under the right-click. Everything is normalized to /p/<shortcode>/,
+  // which yt-dlp resolves anonymously for posts and reels alike.
+  if (/^https:\/\/(?:www\.)?instagram\.com\//.test(info.pageUrl)) {
+    const post = info.pageUrl.match(/\/(?:p|reels?|tv)\/(?!audio\/)([\w-]+)/);
+    url = post ? 'https://www.instagram.com/p/' + post[1] + '/' : null;
+    if (!url && tab && tab.id != null) {
+      url = await chrome.tabs.sendMessage(tab.id, { type: 'get-post-url' })
+        .then((resp) => resp && resp.url)
+        .catch(() => null);
+    }
+    if (!url) {
+      send({ app, kind: 'error', message: 'Could not find the Instagram post for this video' });
+      return;
+    }
+  }
+
   send({ app, kind: 'video', url });
 }
 

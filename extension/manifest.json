@@ -13,12 +13,17 @@
     "128": "icon.png"
   },
   "background": {
-    "service_worker": "background-4.js"
+    "service_worker": "background-5.js"
   },
   "content_scripts": [
     {
       "matches": ["https://x.com/*", "https://twitter.com/*"],
       "js": ["twitter-tweet-url.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://www.instagram.com/*", "https://instagram.com/*"],
+      "js": ["instagram-post-url.js"],
       "run_at": "document_start"
     }
   ],
