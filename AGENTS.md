@@ -17,19 +17,26 @@ canonical idioms (framing, ack, detach, notifications).
   ships inside the plugin dir and the bar half needs no install.sh.
   BarWidget is a one-glyph button (modeled on agx.screen-time's — panel
   shape contract + IpcHandler so `omarchy-shell costafot.yeet
-  toggle` works from a keybinding). Panel is a `qs.Ui` KeyboardPanel:
+  toggle` works from a keybinding). The IpcHandler also exposes
+  `share <telegram|viber> <clipboard|file|video>` and
+  `send <telegram|viber> <text|file|video> <payload>` (headless runs of
+  `scripts/plugin-share`; args validated in QML because execDetached
+  swallows the script's stderr; two functions because Quickshell IPC
+  arity is strict — no optional args). Panel is a `qs.Ui` KeyboardPanel:
   Telegram/Viber sections × Clipboard / File… / Video-from-copied-link rows,
   each row `Quickshell.execDetached`-ing `scripts/plugin-share`. Rows are
   filtered by `scripts/plugin-status` (JSON probe re-run on every open):
   missing app hides its section, missing yt-dlp hides video rows, missing
   Brave host manifest adds a "Set up browser sharing…" row that runs
   install.sh in a floating terminal.
-- `scripts/plugin-share <app> <clipboard|file|video>` — builds the same
-  framed JSON the extension sends (python3 one-liner for the 4-byte LE
-  frame) and pipes it into the bundled host. Clipboard mode prefers an
-  `image/*` clipboard type (screenshots) via the host's `blob` path;
-  file mode uses `omarchy-file-select`; video mode validates an
-  `https://` URL off the clipboard.
+- `scripts/plugin-share <app> <clipboard|text|file|video> [payload]` —
+  builds the same framed JSON the extension sends (python3 one-liner for
+  the 4-byte LE frame) and pipes it into the bundled host. Clipboard mode
+  prefers an `image/*` clipboard type (screenshots) via the host's `blob`
+  path; file mode uses `omarchy-file-select`; video mode validates an
+  `https://` URL off the clipboard. With a payload (a message, a path, a
+  URL) every mode runs non-interactively — the scripting/agent surface;
+  errors then go to stderr AND a toast, exit 1.
 
 - `extension/background-N.js` — builds 4 context-menu items, resolves the
   click payload, sends `{app, kind, ...}` over

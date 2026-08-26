@@ -28,6 +28,28 @@ Rows only show for apps you actually have installed. The **Set up browser
 sharing…** row at the bottom appears until the Brave half below is installed,
 and runs the installer for you.
 
+Every row is also a command, so you can skip the panel entirely from a
+keybinding or script:
+
+```bash
+omarchy-shell costafot.yeet share telegram clipboard
+omarchy-shell costafot.yeet share viber video   # yt-dlp on the copied link
+```
+
+`share <telegram|viber> <clipboard|file|video>` — same actions as the rows.
+
+And `send` takes the payload right on the command line — no picker, no
+clipboard — so scripts and AI agents can drive shares end to end:
+
+```bash
+omarchy-shell costafot.yeet send telegram text "meeting moved to 3pm"
+omarchy-shell costafot.yeet send telegram file ~/Downloads/report.pdf
+omarchy-shell costafot.yeet send viber video https://x.com/i/status/123456
+```
+
+`send <telegram|viber> <text|file|video> <payload>`. The same works
+without the shell: `scripts/plugin-share <app> <mode> [payload]`.
+
 Telegram takes files through its native chat picker — pick the friend, done.
 Viber has no command line and its input **only** accepts pasted images, so
 non-image files (videos mostly) get a Files window opened next to Viber with

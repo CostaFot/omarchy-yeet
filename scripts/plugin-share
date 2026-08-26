@@ -4,7 +4,11 @@
 # native-messaging payload the browser extension sends and pipes it into the
 # bundled host, so all dispatch quirks (Telegram chat picker, Viber
 # clipboard/drag, yt-dlp worker) live in exactly one place.
-# Usage: plugin-share <telegram|viber> <clipboard|file|video>
+# Usage: plugin-share <telegram|viber> <clipboard|text|file|video> [payload]
+#
+# Without a payload, file opens a picker and video reads the clipboard —
+# the panel rows. With one (a message, a path, a URL), every mode runs
+# non-interactively, so scripts and AI agents can drive shares directly.
 
 set -euo pipefail
 
@@ -18,14 +22,21 @@ HOST="$PLUGIN_DIR/host/yeet-host"
 
 APP="${1:-}"
 MODE="${2:-}"
-if [[ $APP != telegram && $APP != viber ]]; then
-  echo "Usage: plugin-share <telegram|viber> <clipboard|file|video>" >&2
-  exit 1
-fi
+PAYLOAD="${3:-}"
 
+usage() {
+  echo "Usage: plugin-share <telegram|viber> <clipboard|text|file|video> [payload]" >&2
+  exit 1
+}
+
+[[ $APP == telegram || $APP == viber ]] || usage
+
+# Toast AND stderr: detached launches (panel rows, IPC) only surface the
+# notification, direct CLI/agent callers only see the stream.
 fail_toast() {
+  echo "$1${2:+: $2}" >&2
   omarchy-notification-send -u critical -g 󰅖 "$1" "${2:-}"
-  exit 0
+  exit 1
 }
 
 # Native messaging frame: 4-byte little-endian length prefix, then the JSON
@@ -38,6 +49,9 @@ sys.stdout.buffer.write(struct.pack("<I", len(m)) + m)' | "$HOST" >/dev/null
 
 case $MODE in
 clipboard)
+  # Sharing "the clipboard" with an explicit payload is a contradiction —
+  # refuse rather than silently share something the caller didn't mean.
+  [[ -z $PAYLOAD ]] || usage
   # An image on the clipboard (screenshots, mostly) beats any text
   # representation of it; base64 it through the host's blob path so the
   # file lands in SHARE_DIR with browser-style uniquifying.
@@ -55,25 +69,36 @@ clipboard)
       '{app: $app, kind: "text", text: $text}' | send
   fi
   ;;
+text)
+  [[ -n $PAYLOAD ]] || usage
+  jq -cn --arg app "$APP" --arg text "$PAYLOAD" \
+    '{app: $app, kind: "text", text: $text}' | send
+  ;;
 file)
-  status=0
-  picked=$(omarchy-file-select --title "Share to ${APP^}") || status=$?
-  if ((status > 1)); then
-    fail_toast "Could not share" "The file chooser did not open"
+  if [[ -n $PAYLOAD ]]; then
+    picked=$(readlink -f -- "$PAYLOAD" 2>/dev/null || true)
+    [[ -n $picked && -f $picked ]] || fail_toast "Could not share" "No such file: $PAYLOAD"
+  else
+    status=0
+    picked=$(omarchy-file-select --title "Share to ${APP^}") || status=$?
+    if ((status > 1)); then
+      fail_toast "Could not share" "The file chooser did not open"
+    fi
+    [[ -n $picked ]] || exit 0
   fi
-  [[ -n $picked ]] || exit 0
   jq -cn --arg app "$APP" --arg path "$picked" \
     '{app: $app, kind: "file", path: $path}' | send
   ;;
 video)
-  url=$(wl-paste --no-newline --type text 2>/dev/null || true)
-  [[ $url =~ ^https?://[^[:space:]]+$ ]] ||
+  url=${PAYLOAD:-$(wl-paste --no-newline --type text 2>/dev/null || true)}
+  if [[ ! $url =~ ^https?://[^[:space:]]+$ ]]; then
+    [[ -n $PAYLOAD ]] && fail_toast "Could not share" "Not a valid link: $PAYLOAD"
     fail_toast "No link on the clipboard" "Copy the video page's URL, then try again"
+  fi
   jq -cn --arg app "$APP" --arg url "$url" \
     '{app: $app, kind: "video", url: $url}' | send
   ;;
 *)
-  echo "Usage: plugin-share <telegram|viber> <clipboard|file|video>" >&2
-  exit 1
+  usage
   ;;
 esac
