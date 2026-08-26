@@ -9,7 +9,7 @@ drag-drop routine with one click.
 
 ## The bar widget
 
-<img src="preview.png" width="374" alt="the share panel">
+<img src="preview.png" width="410" alt="the share panel">
 
 ```bash
 omarchy plugin add https://github.com/CostaFot/omarchy-yeet --enable
