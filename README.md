@@ -15,7 +15,7 @@ drag-drop routine with one click.
 omarchy plugin add https://github.com/CostaFot/omarchy-yeet --enable
 ```
 
-That puts a 󰒖 icon in the bar. Click it (or `omarchy-shell
+That puts a 󰒊 icon in the bar. Click it (or `omarchy-shell
 costafot.yeet toggle` from a keybinding) and pick a row:
 
 | Row | What happens |

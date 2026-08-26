@@ -10,7 +10,7 @@ BarWidget {
   id: root
   moduleName: "costafot.yeet"
 
-  readonly property string glyph: "󰒖"
+  readonly property string glyph: "󰒊"
 
   // ---- Panel shape contract for shell.summon/hide/toggle routing ---------
   readonly property bool opened: panelLoader.item ? panelLoader.item.opened === true : false

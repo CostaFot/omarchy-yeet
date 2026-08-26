@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Yeet: paper plane mid-throw, faint trail. Tokyo Night palette to match the bar. -->
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="#1a1b26"/>
+  <!-- motion trail: two short arcs behind the tail, kept faint -->
+  <g fill="none" stroke="#7aa2f7" stroke-linecap="round">
+    <path d="M22 96 Q30 92 38 91" stroke-width="5" opacity="0.32"/>
+    <path d="M20 82 Q26 80 31 80" stroke-width="5" opacity="0.20"/>
+  </g>
+  <!-- Material send plane (24-grid), nose tilted up for the throw -->
+  <g transform="translate(67 62) rotate(-18) scale(3.9) translate(-12.5 -12)">
+    <path d="M2 21 L23 12 L2 3 L2 10 L17 12 Z" fill="#7aa2f7"/>
+    <path d="M2 14 L17 12 L2 21 Z" fill="#bb9af7"/>
+  </g>
+</svg>
