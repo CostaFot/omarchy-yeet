@@ -13,6 +13,13 @@ SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
 export OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
 export PATH="$OMARCHY_PATH/bin:/usr/local/bin:/usr/bin:$PATH"
 
+# User overrides. The browser launches this host with its own environment, not
+# the user's shell, so a config file is the reliable way to set these; env vars
+# still work for CLI testing (config assignments win if both are set).
+CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/omarchy-messenger-share/config"
+# shellcheck source=/dev/null
+[[ -f $CONFIG_FILE ]] && source "$CONFIG_FILE"
+
 SHARE_DIR="${MESSENGER_SHARE_DIR:-$HOME/Downloads}"
 
 # Cap video resolution: Viber (and Telegram's "send as file") passes the source

@@ -72,10 +72,15 @@ Then remove the extension in `brave://extensions` and delete this folder.
   right-click a second time for the browser menu.
 - Videos are capped at 720p because Viber passes files through nearly
   unchanged — every extra pixel is bytes your friends download — and the apps'
-  own compression tops out around 720p anyway. Override with
-  `MESSENGER_SHARE_MAX_HEIGHT`.
-- Downloaded media stays in `~/Downloads`. Override with `MESSENGER_SHARE_DIR`,
-  set in the environment Brave inherits (e.g. via uwsm env).
+  own compression tops out around 720p anyway.
+- Downloaded media stays in `~/Downloads`.
+- Both are overridable in `~/.config/omarchy-messenger-share/config`
+  (plain shell, sourced by the host — takes effect on the next share):
+
+  ```sh
+  MESSENGER_SHARE_DIR="$HOME/Videos/shares"
+  MESSENGER_SHARE_MAX_HEIGHT=1080
+  ```
 - Downloads run as a transient systemd user unit — closing Brave mid-download
   doesn't kill them.
 - Images with `blob:` URLs can't be fetched and show a "Share failed"

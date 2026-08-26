@@ -37,7 +37,12 @@ canonical idioms (framing, ack, detach, notifications).
   host manifest to `~/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/`.
   Everything user-level, no sudo.
 
-Files land in `SHARE_DIR="${MESSENGER_SHARE_DIR:-$HOME/Downloads}"`.
+Files land in `SHARE_DIR="${MESSENGER_SHARE_DIR:-$HOME/Downloads}"`. User
+overrides live in `~/.config/omarchy-messenger-share/config` (plain shell,
+sourced by the host near the top, so both the framed-message path and the
+`--download` worker re-entry see it); env vars still work for CLI testing but
+Brave doesn't inherit the user's shell env, so the config file is the
+user-facing mechanism.
 
 ## Hard-won constraints — do not re-litigate without re-testing
 
