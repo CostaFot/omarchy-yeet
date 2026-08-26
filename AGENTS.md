@@ -157,11 +157,43 @@ host-script changes apply on next right-click.
 
 ## Deferred / ideas
 
-- Omarchy Share menu rows (`trigger.share.*` in
-  `~/.config/omarchy/extensions/omarchy-menu.jsonc`) for clipboard/file-picker
-  sharing outside the browser.
 - `viber://forward?text=...` deep link might beat clipboard+focus for
   text/links to Viber — untested.
-- Marketplace listing (omarchyplugins.com): would need conversion to a
-  QML shell plugin or stays a standalone repo; submission is via GitHub
-  issue on HANCORE-linux/omarchy-plugin-marketplace.
+
+### Next up: Omarchy shell plugin + marketplace listing
+
+Researched 2026-08 (marketplace repo cloned + local shell sources read);
+the facts below are verified, don't re-derive them.
+
+- The marketplace (HANCORE-linux/omarchy-plugin-marketplace →
+  omarchyplugins.com) only lists **Omarchy shell plugins**: root
+  `manifest.json` with `schemaVersion: 1`, required `id`/`name`/`version`/
+  `author`/`description`, `kinds` from `{bar, bar-widget, menu, overlay,
+  panel, service}`, and per-kind `entryPoints` — **QML files** loaded into
+  omarchy-shell (quickshell) by `omarchy plugin add <repo> --enable`. The
+  schema is enforced locally by `omarchy plugin validate <dir>`
+  (`/usr/share/omarchy/bin/omarchy-plugin-validate`, mirrors
+  `shell/services/PluginRegistry.qml`) — use that as the dev loop.
+- A manifest may declare `"installation": {"mode": "manual", "note": ...}`
+  (marketplace then shows the note instead of an install command), but
+  `kinds`/`entryPoints` must still validate — a token QML entry point to
+  game a listing would not survive maintainer review. Don't go that route.
+- **Plan**: build a real `menu`-kind (maybe + `panel` for settings) QML
+  plugin in this repo — Share-to-Telegram/Viber rows that take the
+  clipboard or a file picker and pipe the same framed messages into
+  `host/messenger-share-host` (see `nautilus/messenger-share.py` for the
+  framing idiom and host-path discovery via the Brave host manifest). The
+  extension/host/nautilus halves stay companions installed by `install.sh`;
+  the plugin's README note points at it. This supersedes the old
+  `trigger.share.*` omarchy-menu.jsonc idea. A settings `panel` (edit
+  `~/.config/omarchy-messenger-share/config`, show install health, run
+  install.sh) is the stretch goal.
+- Local example of plugin shape: `/usr/share/omarchy/shell/plugins/agents/`
+  (Main.qml + manifest).
+- Plugin id must be globally unique, lowercase, not `omarchy.*`; use
+  `io.github.costafot.messenger-share`. Submission is an issue form on the
+  marketplace repo (category `Productivity`, 1–3 tags); repo needs root
+  README + license, and listings get an exact-commit security scan.
+  Expect scrutiny: a companion native-messaging host is browser-reachable
+  code execution, and their policy explicitly flags persistent services
+  and process control — be upfront about it in the README.
