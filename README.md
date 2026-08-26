@@ -11,7 +11,7 @@ No more download → open folder → drag-drop. Right-click, pick a target, done
 | Anything | **Share to Telegram** | Link/text lands on your clipboard and Telegram is focused — paste with Ctrl+V |
 | Anything | **Share to Viber** | Same, with Viber focused |
 | An image | **Share to Telegram / Viber** | Image is downloaded via the browser (works behind logins), then: Telegram opens its "Forward to…" chat picker with the file; Viber gets the image on your clipboard — Ctrl+V in a chat |
-| A video or its page | **Download video → Telegram / Viber** | yt-dlp downloads the video (mp4, ≤1080p) to `~/Downloads` with live progress in the Omarchy OSD, then hands it off the same way |
+| A video or its page | **Download video → Telegram / Viber** | yt-dlp downloads the video (mp4, ≤720p) to `~/Downloads` with live progress in the Omarchy OSD, then hands it off the same way |
 
 Telegram file shares open the native chat picker — pick the friend and it sends.
 Viber has no command-line interface at all, so files/images are placed on the
@@ -55,6 +55,9 @@ Then remove the extension in `brave://extensions` and delete this folder.
 
 - Downloaded media stays in `~/Downloads` (override with `MESSENGER_SHARE_DIR` —
   set it in the environment Brave inherits, e.g. via uwsm env).
+- Videos are capped at 720p to keep what your friends download small — Viber
+  passes files through nearly unchanged, and the apps' own compression tops
+  out around 720p anyway. Override with `MESSENGER_SHARE_MAX_HEIGHT`.
 - On YouTube, the first right-click on the player shows YouTube's own menu;
   right-click a second time for the browser menu. Right-clicking the page
   outside the player works too.

@@ -68,7 +68,14 @@ Files land in `SHARE_DIR="${MESSENGER_SHARE_DIR:-$HOME/Downloads}"`.
   `[data-testid="videoPlayer"]`/`videoComponent`; X's handler is delegated, so
   document-capture wins even when registered late. yt-dlp resolves x.com
   status URLs anonymously (no cookies) and follows quote-tweets to the quoted
-  video; the host's format selector picks X's direct http mp4 fine.
+  video.
+- **Video quality**: `-S "res:${MAX_HEIGHT},proto,ext:mp4"` (default 720,
+  `MESSENGER_SHARE_MAX_HEIGHT` overrides). 720p because Viber sends files
+  through nearly byte-identical (measured: 16.2 MB sent → 15.4 MB received),
+  so source size IS the recipient's download; Telegram/Viber compression
+  tops out ~720p so higher sources are wasted either way. `proto` prefers
+  X's direct https mp4 over its HLS variant; sort-based `-S` never errors
+  on sparse format lists (the 240p-only YouTube test video still resolves).
 
 ## Testing without the browser
 

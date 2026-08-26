@@ -15,6 +15,11 @@ export PATH="$OMARCHY_PATH/bin:/usr/local/bin:/usr/bin:$PATH"
 
 SHARE_DIR="${MESSENGER_SHARE_DIR:-$HOME/Downloads}"
 
+# Cap video resolution: Viber (and Telegram's "send as file") passes the source
+# through nearly unchanged, so every extra pixel is bytes the recipient
+# downloads. 720p matches what the apps' own compression tops out at anyway.
+MAX_HEIGHT="${MESSENGER_SHARE_MAX_HEIGHT:-720}"
+
 # --- app targets --------------------------------------------------------------
 
 # All launches go through uwsm-app synchronously: it only hands the command to
@@ -136,7 +141,7 @@ download_and_share() {
   done < <(PYTHONUNBUFFERED=1 yt-dlp --no-playlist --restrict-filenames --no-simulate \
     --quiet --no-warnings --progress --newline \
     --progress-template $'download:OMARCHY_PROG\t%(progress._percent_str)s' \
-    -f 'bv*[ext=mp4][height<=1080]+ba[ext=m4a]/b[ext=mp4]/b' --merge-output-format mp4 \
+    -S "res:${MAX_HEIGHT},proto,ext:mp4" --merge-output-format mp4 \
     --paths "$SHARE_DIR" -o '%(title).80s [%(id)s].%(ext)s' \
     --print $'after_move:OMARCHY_FILE\t%(filepath)s' \
     "$url" 2>&1)
