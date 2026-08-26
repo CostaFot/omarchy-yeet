@@ -28,16 +28,22 @@ BROWSERS=(
   "Chromium|chromium|$HOME/.config/chromium/NativeMessagingHosts|$HOME/.config/chromium-flags.conf"
 )
 
+# Where the extension lives when installed as an Omarchy plugin. Uninstall
+# strips this from the flags files too, so a checkout's --uninstall still
+# cleans up after `omarchy plugin remove` already deleted the plugin dir
+# (and the install.sh inside it).
+PLUGIN_EXT_DIR="$HOME/.config/omarchy/plugins/costafot.yeet/extension"
+
 remove_flag_entry() {
-  local flags_file=$1
+  local flags_file=$1 ext_dir=$2
   [[ -f $flags_file ]] || return 0
-  grep -qF -- "$EXT_DIR" "$flags_file" || return 0
+  grep -qF -- "$ext_dir" "$flags_file" || return 0
   sed -i \
-    -e "s|,$EXT_DIR||" \
-    -e "s|=$EXT_DIR,|=|" \
-    -e "\|^--load-extension=$EXT_DIR\$|d" \
+    -e "s|,$ext_dir||" \
+    -e "s|=$ext_dir,|=|" \
+    -e "\|^--load-extension=$ext_dir\$|d" \
     "$flags_file"
-  echo "Removed $EXT_DIR from $flags_file"
+  echo "Removed $ext_dir from $flags_file"
 }
 
 if [[ ${1:-} == "--uninstall" ]]; then
@@ -47,7 +53,8 @@ if [[ ${1:-} == "--uninstall" ]]; then
       rm -f "$hosts_dir/$HOST_NAME.json"
       echo "Removed $hosts_dir/$HOST_NAME.json"
     fi
-    remove_flag_entry "$flags_file"
+    remove_flag_entry "$flags_file" "$EXT_DIR"
+    remove_flag_entry "$flags_file" "$PLUGIN_EXT_DIR"
   done
   if [[ -L $NAUTILUS_EXT_DIR/yeet.py ]]; then
     rm -f "$NAUTILUS_EXT_DIR/yeet.py"
