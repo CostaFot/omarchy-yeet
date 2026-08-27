@@ -46,7 +46,8 @@ the file pre-selected — drag it into the chat. I don't make the rules.
 <img src="assets/context-menu.png" width="700" alt="the context menu on an X video">
 
 
-The extension overrides the right click menu where needed to bring the default menu options. 
+The extension overrides the right-click menu where needed to bring back the
+default menu options.
 
 
 | Right-click on | Menu item | What happens |
