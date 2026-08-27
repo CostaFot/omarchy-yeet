@@ -6,7 +6,7 @@
 # flags file (the same mechanism Omarchy uses for its own bundled
 # extensions — no developer mode, no Load unpacked), plus the optional
 # Nautilus right-click extension. The extension ID comes from the "key"
-# already committed in extension/manifest.json, so the normal path writes
+# already committed in browser/extension/manifest.json, so the normal path writes
 # nothing inside the checkout — which keeps it clean when it lives in
 # ~/.config/omarchy/plugins/ and `omarchy plugin update` runs git pull.
 # Usage: ./install.sh [--uninstall]
@@ -16,7 +16,7 @@ set -euo pipefail
 PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 HOST_NAME="com.costa.yeet"
 NAUTILUS_EXT_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/nautilus-python/extensions"
-EXT_DIR="$PROJECT_DIR/extension"
+EXT_DIR="$PROJECT_DIR/browser/extension"
 
 # name|binary|host-manifest dir|flags file. Keep in sync with the manifest
 # probe lists in scripts/plugin-status and nautilus/yeet.py. Chrome is
@@ -32,7 +32,7 @@ BROWSERS=(
 # strips this from the flags files too, so a checkout's --uninstall still
 # cleans up after `omarchy plugin remove` already deleted the plugin dir
 # (and the install.sh inside it).
-PLUGIN_EXT_DIR="$HOME/.config/omarchy/plugins/costafot.yeet/extension"
+PLUGIN_EXT_DIR="$HOME/.config/omarchy/plugins/costafot.yeet/browser/extension"
 
 remove_flag_entry() {
   local flags_file=$1 ext_dir=$2
@@ -70,12 +70,12 @@ cd "$PROJECT_DIR"
 # Chromium takes the first 16 bytes of the SHA-256 of the DER-encoded public
 # key, hex mapped 0-9a-f -> a-p. Forks that strip the key get a fresh one
 # generated and injected, same as the original install flow.
-PUB_DER_B64=$(jq -r '.key // empty' extension/manifest.json)
+PUB_DER_B64=$(jq -r '.key // empty' browser/extension/manifest.json)
 if [[ -z $PUB_DER_B64 ]]; then
   [[ -f key.pem ]] || openssl genrsa -out key.pem 2048 2>/dev/null
   PUB_DER_B64=$(openssl rsa -in key.pem -pubout -outform DER 2>/dev/null | base64 -w0)
-  jq --arg k "$PUB_DER_B64" '.key = $k' extension/manifest.json > extension/manifest.json.tmp
-  mv extension/manifest.json.tmp extension/manifest.json
+  jq --arg k "$PUB_DER_B64" '.key = $k' browser/extension/manifest.json > browser/extension/manifest.json.tmp
+  mv browser/extension/manifest.json.tmp browser/extension/manifest.json
 fi
 EXT_ID=$(base64 -d <<<"$PUB_DER_B64" | sha256sum | head -c32 | tr '0-9a-f' 'a-p')
 

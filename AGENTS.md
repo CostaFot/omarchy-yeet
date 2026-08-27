@@ -38,20 +38,20 @@ canonical idioms (framing, ack, detach, notifications).
   URL) every mode runs non-interactively — the scripting/agent surface;
   errors then go to stderr AND a toast, exit 1.
 
-- `extension/background-N.js` — builds 4 context-menu items, resolves the
+- `browser/extension/background-N.js` — builds 4 context-menu items, resolves the
   click payload, sends `{app, kind, ...}` over
   `chrome.runtime.sendNativeMessage('com.costa.yeet', ...)`.
   Images are fetched IN the extension (cookies via `host_permissions:
   <all_urls>`) and streamed to the host as base64 (`kind: blob`).
-- `extension/twitter-tweet-url.js` — content script on x.com/twitter.com
+- `browser/extension/twitter-tweet-url.js` — content script on x.com/twitter.com
   (`run_at: document_start`). Tracks the tweet under each right-click and
   answers the background's `{type: 'get-tweet-url'}` message with its
   `/status/` URL; also suppresses X's custom video context menu. See the
   X/Twitter constraint below for the why.
-- `extension/instagram-post-url.js` — same idea for Instagram's home feed:
+- `browser/extension/instagram-post-url.js` — same idea for Instagram's home feed:
   answers `{type: 'get-post-url'}` with the `/p/<shortcode>/` permalink of
   the post under the right-click. See the Instagram constraint below.
-- `extension/tiktok-video-url.js` — same idea for TikTok's For You feed:
+- `browser/extension/tiktok-video-url.js` — same idea for TikTok's For You feed:
   answers `{type: 'get-tiktok-url'}` with the `/@user/video/<id>` permalink,
   and suppresses TikTok's custom video context menu. See the TikTok
   constraint below.
@@ -69,7 +69,7 @@ canonical idioms (framing, ack, detach, notifications).
   Installed as a symlink by `install.sh` (removed by `--uninstall`);
   Nautilus loads extensions at startup, so changes need `nautilus -q`.
 - `install.sh` — the extension ID is pinned by the `key` field COMMITTED in
-  `extension/manifest.json` (public key only; ID = sha256 of DER pubkey,
+  `browser/extension/manifest.json` (public key only; ID = sha256 of DER pubkey,
   first 32 hex chars mapped 0-9a-f→a-p → `oehfaclnoafdfecmghpojgolkdheebmk`).
   The normal path therefore writes nothing inside the checkout — critical,
   because `omarchy plugin update` runs git pull in the plugin dir. It only
@@ -133,7 +133,7 @@ user-facing mechanism.
   `setsid -f` only what stays in the foreground.
 - **X/Twitter videos** (all verified live 2026-08): video `src` is `blob:` or
   empty, timeline `pageUrl` is `/home` — the only yt-dlp-able URL is the tweet's
-  `/status/` URL. `extension/twitter-tweet-url.js` (content script, x.com +
+  `/status/` URL. `browser/extension/twitter-tweet-url.js` (content script, x.com +
   twitter.com) records the status URL of the tweet under each right-click via
   the timestamp link `a[href*="/status/"]:has(time)`; promoted tweets have no
   timestamp link, only `/status/<id>/analytics`, which the regex trims. X also
@@ -155,7 +155,7 @@ user-facing mechanism.
   context and `page`/`video` menu items never show — hence the link-scoped
   `tg/vb-video-link` twins (`targetUrlPatterns` on instagram post/reel
   hrefs), with `info.linkUrl` as the primary URL source.
-  `extension/instagram-post-url.js` is the fallback: it records the post
+  `browser/extension/instagram-post-url.js` is the fallback: it records the post
   permalink under each right-click via the article's timestamp link
   (`a[href*="/p/"]:has(time)`); `/reels/audio/…` and profile `/user/reels/`
   links are decoys the shortcode regex must reject. Unlike X, Instagram keeps
