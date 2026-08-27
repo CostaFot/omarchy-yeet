@@ -17,7 +17,7 @@ omarchy plugin add https://github.com/CostaFot/omarchy-yeet --enable
 
 ## Widget
 
-<img src="preview.png" width="410" alt="the share panel">
+<img src="assets/panel.png" width="410" alt="the share panel">
 
 
 That puts an icon in the bar. 
