@@ -85,7 +85,11 @@ dispatch_file() {
 
 # Write a base64 payload (extension-fetched image) into SHARE_DIR and dispatch.
 receive_blob() {
-  local app="$1" name="${2:-image.bin}" target
+  local app="$1" name target
+  # The name crosses the trust boundary from the browser: reduce it to a plain
+  # basename so it can't traverse out of SHARE_DIR.
+  name=$(basename -- "${2:-}")
+  [[ -z $name || $name == . || $name == .. ]] && name="image.bin"
   mkdir -p "$SHARE_DIR"
   target="$SHARE_DIR/$name"
   # Uniquify like the browser would: name.ext -> name (1).ext
@@ -93,7 +97,9 @@ receive_blob() {
   while [[ -e $target ]]; do
     target="$SHARE_DIR/$stem ($((n++))).$ext"
   done
-  if ! jq -r '.data // empty' | base64 -d > "$target" 2>/dev/null || [[ ! -s $target ]]; then
+  # noclobber makes the > an O_CREAT|O_EXCL open: never truncates a file that
+  # raced in after the uniquify check, never follows a planted symlink.
+  if ! (set -C; jq -r '.data // empty' | base64 -d > "$target") 2>/dev/null || [[ ! -s $target ]]; then
     rm -f "$target"
     omarchy-notification-send -u critical -g 󰅖 "Share failed" "Could not save image"
     return 0
@@ -177,13 +183,19 @@ main() {
   fi
 
   # Native messaging frame: 4-byte little-endian length prefix, then UTF-8 JSON.
+  # The length is browser-supplied: cap it before reading anything. The largest
+  # legitimate frame is a base64 screenshot, nowhere near 64 MiB.
+  local max_frame=$((64 * 1024 * 1024))
   length=$(head -c4 | od -An -v -tu4 --endian=little | tr -d ' ')
-  [[ -n ${length:-} ]] && ((length > 0)) || exit 0
+  [[ -n ${length:-} ]] && ((length > 0 && length <= max_frame)) || exit 0
 
   payload=$(head -c "$length")
 
   # Ack with an empty message so the extension's sendNativeMessage callback resolves cleanly.
   printf '\x02\x00\x00\x00{}'
+
+  # Anything that isn't a complete JSON object (truncated frame, garbage) stops here.
+  jq -e 'type == "object"' >/dev/null 2>&1 <<<"$payload" || exit 0
 
   app=$(jq -r '.app // empty' 2>/dev/null <<<"$payload" || true)
   kind=$(jq -r '.kind // empty' 2>/dev/null <<<"$payload" || true)
